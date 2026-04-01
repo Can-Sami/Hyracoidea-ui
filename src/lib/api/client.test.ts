@@ -7,7 +7,7 @@ describe('api client', () => {
     vi.unstubAllGlobals()
   })
 
-  it('maps non-2xx responses to a normalized error', async () => {
+  it('throws an Error subtype while preserving normalized fields', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ code: 'NOT_FOUND', message: 'User not found' }), {
         status: 404,
@@ -17,7 +17,10 @@ describe('api client', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(get('/api/users/42')).rejects.toMatchObject({
+    const request = get('/api/users/42')
+
+    await expect(request).rejects.toBeInstanceOf(Error)
+    await expect(request).rejects.toMatchObject({
       status: 404,
       code: 'NOT_FOUND',
       message: 'User not found',
@@ -47,5 +50,34 @@ describe('api client', () => {
         body: JSON.stringify({ name: 'Ada' }),
       }),
     )
+  })
+
+  it('returns undefined for 204 responses with empty body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 204,
+      }),
+    )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await get<undefined>('/api/users/42')
+
+    expect(result).toBeUndefined()
+  })
+
+  it('returns undefined for 2xx responses with empty string body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await get<undefined>('/api/users/42')
+
+    expect(result).toBeUndefined()
   })
 })

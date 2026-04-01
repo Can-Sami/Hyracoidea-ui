@@ -13,6 +13,18 @@ function normalizeErrorPayload(payload: unknown): ErrorPayload {
   }
 }
 
+export class ApiClientError extends Error implements ApiError {
+  status: number
+  code: string
+
+  constructor(status: number, code: string, message: string) {
+    super(message)
+    this.name = 'ApiClientError'
+    this.status = status
+    this.code = code
+  }
+}
+
 export async function mapResponseError(response: Response): Promise<ApiError> {
   const fallbackMessage = response.statusText || 'Request failed'
   let payload: unknown
@@ -25,9 +37,9 @@ export async function mapResponseError(response: Response): Promise<ApiError> {
 
   const normalized = normalizeErrorPayload(payload)
 
-  return {
-    status: response.status,
-    code: normalized.code ?? 'UNKNOWN_ERROR',
-    message: normalized.message ?? fallbackMessage,
-  }
+  return new ApiClientError(
+    response.status,
+    normalized.code ?? 'UNKNOWN_ERROR',
+    normalized.message ?? fallbackMessage,
+  )
 }

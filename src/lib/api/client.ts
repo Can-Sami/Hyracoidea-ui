@@ -10,7 +10,12 @@ async function requestJson<T>(input: string, init: RequestInit): Promise<T> {
     throw await mapResponseError(response)
   }
 
-  return (await response.json()) as T
+  const rawBody = await response.text()
+  if (rawBody === '') {
+    return undefined as T
+  }
+
+  return JSON.parse(rawBody) as T
 }
 
 export function get<T>(input: string, init: ClientInit = {}): Promise<T> {
