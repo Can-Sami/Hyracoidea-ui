@@ -8,6 +8,7 @@ import {
 
 import { indexRoute } from './index'
 import { intentsRoute } from './intents'
+import { testLabRoute } from './test-lab'
 import { rootRoute } from './__root'
 
 describe('router navigation', () => {
@@ -58,5 +59,20 @@ describe('router navigation', () => {
       await screen.findByRole('heading', { name: /intent management/i }),
     ).toBeInTheDocument()
     expect(screen.getByText(/library manifest/i)).toBeInTheDocument()
+  })
+
+  it('renders test lab page at /test-lab', async () => {
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([indexRoute, intentsRoute, testLabRoute]),
+      history: createMemoryHistory({ initialEntries: ['/test-lab'] }),
+    })
+
+    render(<RouterProvider router={router} />)
+
+    expect(
+      await screen.findByRole('heading', { name: /test & inference lab/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/semantic search/i)).toBeInTheDocument()
+    expect(screen.getByText(/audio inference/i)).toBeInTheDocument()
   })
 })

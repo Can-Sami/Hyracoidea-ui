@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-type SidebarPage = 'overview' | 'intents'
+type SidebarPage = 'overview' | 'intents' | 'test-lab'
 
 type NavItem = {
   label: string
@@ -54,7 +54,12 @@ export function AppSidebar({ activePage }: { activePage: SidebarPage }) {
       icon: TreePine,
       active: activePage === 'intents',
     },
-    { label: 'Test Lab', href: '#', icon: FlaskConical, active: false },
+    {
+      label: 'Test Lab',
+      href: '/test-lab',
+      icon: FlaskConical,
+      active: activePage === 'test-lab',
+    },
     { label: 'Analytics', href: '#', icon: TrendingUp, active: false },
   ]
 
