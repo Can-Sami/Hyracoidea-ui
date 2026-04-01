@@ -29,7 +29,7 @@ describe('AppProviders', () => {
 
     render(<AppProviders />)
 
-    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /overview dashboard/i })).toBeInTheDocument()
   })
 
   it('mounts router/query devtools in development', async () => {
@@ -48,7 +48,7 @@ describe('AppProviders', () => {
 
     render(<AppProviders />)
 
-    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /overview dashboard/i })).toBeInTheDocument()
     expect(screen.queryByTestId('router-devtools')).not.toBeInTheDocument()
     expect(screen.queryByTestId('query-devtools')).not.toBeInTheDocument()
   })

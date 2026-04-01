@@ -7,10 +7,11 @@ import {
 } from '@tanstack/react-router'
 
 import { indexRoute } from './index'
+import { intentsRoute } from './intents'
 import { rootRoute } from './__root'
 
 describe('router navigation', () => {
-  it('renders baseline content for the / route', async () => {
+  it('renders overview dashboard content for the / route', async () => {
     const router = createRouter({
       routeTree: rootRoute.addChildren([indexRoute]),
       history: createMemoryHistory({ initialEntries: ['/'] }),
@@ -18,7 +19,10 @@ describe('router navigation', () => {
 
     render(<RouterProvider router={router} />)
 
-    expect(await screen.findByText(/baseline route is ready\./i)).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /overview dashboard/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/recent inference activity/i)).toBeInTheDocument()
   })
 
   it('renders friendly fallback from root error boundary', async () => {
@@ -40,5 +44,19 @@ describe('router navigation', () => {
     expect(
       await screen.findByText(/something went wrong\. please try again\./i),
     ).toBeInTheDocument()
+  })
+
+  it('renders intent management page at /intents', async () => {
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([indexRoute, intentsRoute]),
+      history: createMemoryHistory({ initialEntries: ['/intents'] }),
+    })
+
+    render(<RouterProvider router={router} />)
+
+    expect(
+      await screen.findByRole('heading', { name: /intent management/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/library manifest/i)).toBeInTheDocument()
   })
 })
