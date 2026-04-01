@@ -5,3 +5,8 @@ export type ApiError = {
 }
 
 export type RequestBody = Record<string, unknown>
+
+export type ErrorPayload = {
+  code?: string
+  message?: string
+}

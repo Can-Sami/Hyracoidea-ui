@@ -1,9 +1,4 @@
-import type { ApiError } from './types'
-
-type ErrorPayload = {
-  code?: string
-  message?: string
-}
+import type { ApiError, ErrorPayload } from './types'
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
