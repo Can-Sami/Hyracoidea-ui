@@ -48,6 +48,7 @@ describe('AppProviders', () => {
 
     render(<AppProviders />)
 
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
     expect(screen.queryByTestId('router-devtools')).not.toBeInTheDocument()
     expect(screen.queryByTestId('query-devtools')).not.toBeInTheDocument()
   })
