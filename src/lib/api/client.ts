@@ -40,3 +40,26 @@ export function post<TResponse, TBody extends RequestBody>(
     body: JSON.stringify(body),
   })
 }
+
+export function put<TResponse, TBody extends RequestBody>(
+  input: string,
+  body: TBody,
+  init: ClientInit = {},
+): Promise<TResponse> {
+  const headers = new Headers(init.headers)
+  headers.set('Content-Type', 'application/json')
+
+  return requestJson<TResponse>(input, {
+    ...init,
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+export function del<TResponse>(input: string, init: ClientInit = {}): Promise<TResponse> {
+  return requestJson<TResponse>(input, {
+    ...init,
+    method: 'DELETE',
+  })
+}

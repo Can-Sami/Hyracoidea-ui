@@ -88,9 +88,11 @@ export function AppSidebar({ activePage }: { activePage: SidebarPage }) {
         ))}
       </nav>
 
-      <Button className="mb-6 h-10 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-        <Plus data-icon="inline-start" />
-        New Intent
+      <Button asChild className="mb-6 h-10 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+        <a href="/intents/new">
+          <Plus data-icon="inline-start" />
+          New Intent
+        </a>
       </Button>
 
       <nav className="flex flex-col gap-1 border-t pt-4">

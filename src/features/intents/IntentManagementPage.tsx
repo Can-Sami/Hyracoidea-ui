@@ -1,4 +1,5 @@
 import type { ComponentProps, ComponentType } from 'react'
+import { useState } from 'react'
 import {
   Bot,
   ChevronLeft,
@@ -8,6 +9,7 @@ import {
   Filter,
   Plus,
   RefreshCcw,
+  Save,
   Trash2,
   TreePine,
   TrendingUp,
@@ -15,9 +17,18 @@ import {
 
 import { AppHeader } from '@/components/layout/AppHeader'
 import { AppSidebar } from '@/components/layout/AppSidebar'
+import {
+  useCreateIntentMutation,
+  useDeleteIntentMutation,
+  useIntentsQuery,
+  useReindexIntentsMutation,
+  useUpdateIntentMutation,
+} from '@/lib/api/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -37,6 +48,7 @@ type Metric = {
 }
 
 type IntentRow = {
+  id: string
   code: string
   description: string
   status: 'active' | 'inactive'
@@ -67,36 +79,6 @@ const metrics: Metric[] = [
     value: '2.4k',
     hint: 'Training samples across library',
     icon: TrendingUp,
-  },
-]
-
-const rows: IntentRow[] = [
-  {
-    code: 'GET_ORDER_STATUS',
-    description:
-      'Retrieves current delivery and shipping updates for a specific order ID.',
-    status: 'active',
-    utterances: 425,
-  },
-  {
-    code: 'CANCEL_SUBSCRIPTION',
-    description: 'Initiates the cancellation flow for recurring billing plans.',
-    status: 'active',
-    utterances: 182,
-  },
-  {
-    code: 'LEGACY_FAULT_REPORT',
-    description:
-      'DEPRECATED: Old fault reporting system. Migrating to TICKETING_NEW.',
-    status: 'inactive',
-    utterances: 89,
-  },
-  {
-    code: 'AGENT_HANDOFF',
-    description:
-      'Triggers transition from AI bot to live support representative.',
-    status: 'active',
-    utterances: 612,
   },
 ]
 
@@ -144,6 +126,32 @@ function StatusBadge({ status }: Pick<IntentRow, 'status'>) {
 }
 
 export function IntentManagementPage() {
+  const intentsQuery = useIntentsQuery()
+  const reindexMutation = useReindexIntentsMutation()
+  const createMutation = useCreateIntentMutation()
+  const updateMutation = useUpdateIntentMutation()
+  const deleteMutation = useDeleteIntentMutation()
+  const [intentCode, setIntentCode] = useState('')
+  const [description, setDescription] = useState('')
+  const [editingIntentId, setEditingIntentId] = useState<string | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+
+  const rows: IntentRow[] = (intentsQuery.data?.items ?? []).map((item) => ({
+    id: item.id,
+    code: item.intent_code,
+    description: item.description,
+    status: item.is_active ? 'active' : 'inactive',
+    utterances: 0,
+  }))
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending
+  const openCreateForm = () => {
+    setEditingIntentId(null)
+    setIntentCode('')
+    setDescription('')
+    setIsFormOpen(true)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar activePage="intents" />
@@ -163,16 +171,90 @@ export function IntentManagementPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() => {
+                reindexMutation.mutate()
+              }}
+              disabled={reindexMutation.isPending}
+            >
               <RefreshCcw data-icon="inline-start" />
-              Reindex All
+              {reindexMutation.isPending ? 'Reindexing...' : 'Reindex All'}
             </Button>
-            <Button className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+            <Button
+              className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
+              onClick={openCreateForm}
+            >
               <Plus data-icon="inline-start" />
               New Intent
             </Button>
           </div>
         </section>
+        <div className="flex gap-2">
+          <Button
+            aria-label="Open create intent form"
+            onClick={openCreateForm}
+          >
+            <Plus data-icon="inline-start" />
+            Create Intent
+          </Button>
+        </div>
+
+        {isFormOpen ? (
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>{editingIntentId ? 'Edit Intent' : 'Create Intent'}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <Input
+                aria-label="Intent code"
+                placeholder="balance_inquiry"
+                value={intentCode}
+                onChange={(event) => setIntentCode(event.target.value)}
+              />
+              <Textarea
+                aria-label="Intent description"
+                placeholder="Customer asks account balance"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={async () => {
+                    const body = {
+                      intent_code: intentCode.trim(),
+                      description: description.trim(),
+                    }
+                    if (!body.intent_code || !body.description) return
+
+                    if (editingIntentId) {
+                      await updateMutation.mutateAsync({ intentId: editingIntentId, body })
+                    } else {
+                      await createMutation.mutateAsync(body)
+                    }
+                    setIsFormOpen(false)
+                    setEditingIntentId(null)
+                    setIntentCode('')
+                    setDescription('')
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <Save data-icon="inline-start" />
+                  {isSubmitting ? 'Saving...' : 'Save'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsFormOpen(false)
+                    setEditingIntentId(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {metrics.map((metric) => (
@@ -180,11 +262,26 @@ export function IntentManagementPage() {
           ))}
         </section>
 
+        {intentsQuery.isError || createMutation.isError || updateMutation.isError || deleteMutation.isError ? (
+          <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            {intentsQuery.error?.message ||
+              createMutation.error?.message ||
+              updateMutation.error?.message ||
+              deleteMutation.error?.message}
+          </p>
+        ) : null}
+
+        {reindexMutation.isSuccess ? (
+          <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+            {reindexMutation.data.reindexed_count} intents reindexed
+          </p>
+        ) : null}
+
         <Card className="border-border/70 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <CardTitle className="text-xl">Library Manifest</CardTitle>
-              <Badge variant="secondary">142 total</Badge>
+                <Badge variant="secondary">{rows.length} total</Badge>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm">
@@ -209,8 +306,8 @@ export function IntentManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.code}>
+                  {rows.map((row) => (
+                    <TableRow key={row.id}>
                     <TableCell>
                       <code className="rounded-md bg-muted px-2 py-1 text-xs font-semibold text-primary">
                         {row.code}
@@ -237,6 +334,12 @@ export function IntentManagementPage() {
                           variant="ghost"
                           size="icon-sm"
                           aria-label={`Edit ${row.code}`}
+                          onClick={() => {
+                            setEditingIntentId(row.id)
+                            setIntentCode(row.code)
+                            setDescription(row.description)
+                            setIsFormOpen(true)
+                          }}
                         >
                           <Edit />
                         </Button>
@@ -244,8 +347,14 @@ export function IntentManagementPage() {
                           variant="ghost"
                           size="icon-sm"
                           aria-label={`Delete ${row.code}`}
+                          onClick={() => {
+                            void deleteMutation.mutateAsync(row.id)
+                          }}
                         >
                           <Trash2 />
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                          <a href={`/intents/${row.id}/utterances`}>Utterances</a>
                         </Button>
                       </div>
                     </TableCell>
@@ -254,7 +363,10 @@ export function IntentManagementPage() {
               </TableBody>
             </Table>
             <div className="flex items-center justify-between border-t p-4 text-xs text-muted-foreground">
-              <span>Showing 1 to 4 of 142 intents</span>
+              <span>
+                Showing {rows.length === 0 ? 0 : 1} to {rows.length} of {rows.length}{' '}
+                intents
+              </span>
               <div className="flex items-center gap-1">
                 <Button size="icon-xs" variant="outline" disabled aria-label="Previous page">
                   <ChevronLeft />
@@ -309,7 +421,17 @@ export function IntentManagementPage() {
                       </span>
                     </div>
                     <p className="font-medium">"{suggestion.text}"</p>
-                    <Button variant="link" size="sm" className="self-end">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="self-end"
+                      onClick={() => {
+                        setEditingIntentId(null)
+                        setIntentCode('')
+                        setDescription(suggestion.text)
+                        setIsFormOpen(true)
+                      }}
+                    >
                       CREATE INTENT
                     </Button>
                   </CardContent>

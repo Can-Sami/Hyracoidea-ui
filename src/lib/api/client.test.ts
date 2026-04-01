@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { get, post } from './client'
+import { del, get, post, put } from './client'
 
 describe('api client', () => {
   afterEach(() => {
@@ -79,5 +79,46 @@ describe('api client', () => {
     const result = await get<undefined>('/api/users/42')
 
     expect(result).toBeUndefined()
+  })
+
+  it('sends PUT requests with a JSON body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'it-1', intent_code: 'card_limit' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await put<{ id: string; intent_code: string }, { intent_code: string; description: string }>(
+      '/api/v1/intents/it-1',
+      { intent_code: 'card_limit', description: 'Card limit inquiry' },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/intents/it-1',
+      expect.objectContaining({
+        method: 'PUT',
+      }),
+    )
+  })
+
+  it('sends DELETE requests', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ status: 'deleted', id: 'it-1' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await del<{ status: string; id: string }>('/api/v1/intents/it-1')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/intents/it-1',
+      expect.objectContaining({
+        method: 'DELETE',
+      }),
+    )
   })
 })

@@ -4,11 +4,15 @@ import {
   FileUp,
   SearchCheck,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 
 import { AppHeader } from '@/components/layout/AppHeader'
 import { AppSidebar } from '@/components/layout/AppSidebar'
-import { post } from '@/lib/api/client'
+import {
+  useAudioInferenceMutation,
+  useSearchIntentsMutation,
+} from '@/lib/api/hooks'
+import type { InferenceIntentResponse } from '@/lib/api/schema'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,10 +36,16 @@ type SearchResponse = {
 
 export function TestLabPage() {
   const [query, setQuery] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [fullResponse, setFullResponse] = useState<SearchResponse | null>(null)
+  const [audioError, setAudioError] = useState<string | null>(null)
+  const [inferenceResponse, setInferenceResponse] =
+    useState<InferenceIntentResponse | null>(null)
+
+  const searchMutation = useSearchIntentsMutation()
+  const audioMutation = useAudioInferenceMutation()
+  const isSearching = searchMutation.isPending
+  const searchError = searchMutation.error?.message ?? null
 
   const canExecute = query.trim().length > 0 && !isSearching
 
@@ -67,15 +77,9 @@ export function TestLabPage() {
     const trimmed = query.trim()
     if (!trimmed) return
 
-    setIsSearching(true)
-    setSearchError(null)
-
     try {
       const body: SearchRequest = { query: trimmed, k: 5, language_hint: 'tr' }
-      const response = await post<SearchResponse, SearchRequest>(
-        '/api/v1/intents/search',
-        body,
-      )
+      const response = await searchMutation.mutateAsync(body)
 
       setFullResponse(response)
       setSearchResults(
@@ -84,14 +88,33 @@ export function TestLabPage() {
           score: item.score.toFixed(3),
         })),
       )
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Semantic search failed'
-      setSearchError(message)
+    } catch {
       setSearchResults([])
       setFullResponse(null)
+    }
+  }
+
+  async function onAudioFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('audio_file', file)
+    formData.append('language_hint', 'tr')
+    formData.append('channel_id', 'test-lab-ui')
+    formData.append('request_id', `req-${Date.now()}`)
+
+    setAudioError(null)
+
+    try {
+      const response = await audioMutation.mutateAsync(formData)
+      setInferenceResponse(response)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Audio inference failed'
+      setAudioError(message)
+      setInferenceResponse(null)
     } finally {
-      setIsSearching(false)
+      event.target.value = ''
     }
   }
 
@@ -256,6 +279,12 @@ export function TestLabPage() {
                   <p className="text-xs text-muted-foreground">
                     Max size 5MB • PCM Mono 16kHz
                   </p>
+                  <Input
+                    className="mt-4"
+                    type="file"
+                    accept=".wav,audio/wav"
+                    onChange={onAudioFileChange}
+                  />
                 </div>
 
                 <Card className="border-primary/20 bg-primary/5">
@@ -265,13 +294,21 @@ export function TestLabPage() {
                     </p>
                     <div className="mt-3 flex items-end justify-between gap-4">
                       <div>
-                        <p className="text-2xl font-extrabold">support_request</p>
+                        <p className="text-2xl font-extrabold">
+                          {inferenceResponse?.intent_code ?? 'support_request'}
+                        </p>
                         <p className="mt-1 text-xs italic text-muted-foreground">
-                          &quot;I&apos;m having trouble with the mobile app login.&quot;
+                          {inferenceResponse?.transcript
+                            ? `"${inferenceResponse.transcript}"`
+                            : '&quot;I&apos;m having trouble with the mobile app login.&quot;'}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-3xl font-extrabold text-primary">94%</p>
+                        <p className="text-3xl font-extrabold text-primary">
+                          {inferenceResponse
+                            ? `${Math.round(inferenceResponse.confidence * 100)}%`
+                            : '94%'}
+                        </p>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                           Match
                         </p>
@@ -284,14 +321,25 @@ export function TestLabPage() {
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Candidate Ranking
                   </h3>
-                  <div className="flex items-center justify-between border-b py-2 text-xs">
-                    <span>technical_glitch</span>
-                    <span className="font-bold text-muted-foreground">0.042</span>
-                  </div>
-                  <div className="flex items-center justify-between border-b py-2 text-xs">
-                    <span>forgot_password</span>
-                    <span className="font-bold text-muted-foreground">0.015</span>
-                  </div>
+                  {(inferenceResponse?.top_candidates ?? [
+                    { intent_code: 'technical_glitch', score: 0.042 },
+                    { intent_code: 'forgot_password', score: 0.015 },
+                  ]).map((candidate) => (
+                    <div
+                      key={candidate.intent_code}
+                      className="flex items-center justify-between border-b py-2 text-xs"
+                    >
+                      <span>{candidate.intent_code}</span>
+                      <span className="font-bold text-muted-foreground">
+                        {candidate.score.toFixed(3)}
+                      </span>
+                    </div>
+                  ))}
+                  {audioError ? (
+                    <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                      {audioError}
+                    </p>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
@@ -310,7 +358,11 @@ export function TestLabPage() {
                 <Textarea
                   className="min-h-56 bg-zinc-950 font-mono text-xs text-emerald-400"
                   readOnly
-                  value={rawJsonPreview}
+                  value={
+                    inferenceResponse
+                      ? JSON.stringify(inferenceResponse, null, 2)
+                      : rawJsonPreview
+                  }
                 />
               </CardContent>
             </Card>

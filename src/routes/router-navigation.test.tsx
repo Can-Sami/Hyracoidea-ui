@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   RouterProvider,
   createMemoryHistory,
@@ -8,8 +9,19 @@ import {
 
 import { indexRoute } from './index'
 import { intentsRoute } from './intents'
+import { intentsUtterancesRoute } from './intents-utterances'
 import { testLabRoute } from './test-lab'
 import { rootRoute } from './__root'
+
+function renderWithProviders(ui: React.ReactNode) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  )
+}
 
 describe('router navigation', () => {
   it('renders overview dashboard content for the / route', async () => {
@@ -18,7 +30,7 @@ describe('router navigation', () => {
       history: createMemoryHistory({ initialEntries: ['/'] }),
     })
 
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
 
     expect(
       await screen.findByRole('heading', { name: /overview dashboard/i }),
@@ -40,7 +52,7 @@ describe('router navigation', () => {
       history: createMemoryHistory({ initialEntries: ['/crash-test'] }),
     })
 
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
 
     expect(
       await screen.findByText(/something went wrong\. please try again\./i),
@@ -53,7 +65,7 @@ describe('router navigation', () => {
       history: createMemoryHistory({ initialEntries: ['/intents'] }),
     })
 
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
 
     expect(
       await screen.findByRole('heading', { name: /intent management/i }),
@@ -67,12 +79,32 @@ describe('router navigation', () => {
       history: createMemoryHistory({ initialEntries: ['/test-lab'] }),
     })
 
-    render(<RouterProvider router={router} />)
+    renderWithProviders(<RouterProvider router={router} />)
 
     expect(
       await screen.findByRole('heading', { name: /test & inference lab/i }),
     ).toBeInTheDocument()
     expect(screen.getByText(/semantic search/i)).toBeInTheDocument()
     expect(screen.getByText(/audio inference/i)).toBeInTheDocument()
+  })
+
+  it('renders utterance management page at /intents/:id/utterances', async () => {
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([
+        indexRoute,
+        intentsRoute,
+        intentsUtterancesRoute,
+        testLabRoute,
+      ]),
+      history: createMemoryHistory({
+        initialEntries: ['/intents/intent-1/utterances'],
+      }),
+    })
+
+    renderWithProviders(<RouterProvider router={router} />)
+
+    expect(
+      await screen.findByRole('heading', { name: /utterance management/i }),
+    ).toBeInTheDocument()
   })
 })

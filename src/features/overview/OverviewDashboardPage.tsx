@@ -2,6 +2,7 @@ import { Activity, CalendarDays, CircleCheckBig, RefreshCcw } from 'lucide-react
 
 import { AppHeader } from '@/components/layout/AppHeader'
 import { AppSidebar } from '@/components/layout/AppSidebar'
+import { useHealthQuery, useReadyzQuery } from '@/lib/api/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -76,6 +77,9 @@ function confidenceBarClass(confidence: number) {
 }
 
 export function OverviewDashboardPage() {
+  const healthQuery = useHealthQuery()
+  const readyzQuery = useReadyzQuery()
+
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar activePage="overview" />
@@ -97,11 +101,25 @@ export function OverviewDashboardPage() {
               <CalendarDays data-icon="inline-start" />
               Last 24 Hours
             </Button>
-            <Button variant="outline" size="icon" aria-label="Refresh dashboard">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Refresh dashboard"
+              onClick={() => {
+                void healthQuery.refetch()
+                void readyzQuery.refetch()
+              }}
+            >
               <RefreshCcw />
             </Button>
           </div>
         </section>
+
+        {healthQuery.isError || readyzQuery.isError ? (
+          <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            {healthQuery.error?.message ?? readyzQuery.error?.message}
+          </p>
+        ) : null}
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <Card className="border-border/70 shadow-sm">
@@ -152,7 +170,9 @@ export function OverviewDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-bold">Operational</p>
-                <p className="text-xs text-muted-foreground">Uptime: 99.98%</p>
+                <p className="text-xs text-muted-foreground">
+                  {healthQuery.data?.status ?? 'unknown'}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -169,7 +189,9 @@ export function OverviewDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-bold">Ready</p>
-                <p className="text-xs text-muted-foreground">Latency: 42ms</p>
+                <p className="text-xs text-muted-foreground">
+                  {readyzQuery.data?.service ?? 'unknown service'}
+                </p>
               </div>
             </CardContent>
           </Card>
