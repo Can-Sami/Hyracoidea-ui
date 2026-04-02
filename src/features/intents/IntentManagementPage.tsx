@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import {
   Edit,
+  Ellipsis,
+  MessageSquareText,
   Plus,
   RefreshCcw,
   Save,
@@ -18,8 +20,21 @@ import {
 } from '@/lib/api/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Field,
   FieldDescription,
@@ -81,6 +96,8 @@ export function IntentManagementPage() {
     description: item.description,
     status: item.is_active ? 'active' : 'inactive',
   }))
+  const activeCount = rows.filter((row) => row.status === 'active').length
+  const inactiveCount = rows.length - activeCount
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending
   const openCreateForm = () => {
@@ -273,44 +290,65 @@ export function IntentManagementPage() {
         ) : null}
 
         <Card className="border-border/70 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 px-6 pb-4 pt-5">
-            <div className="flex items-center gap-3">
-              <CardTitle className="text-xl">Library Manifest</CardTitle>
-              <Badge variant="outline">{rows.length} total</Badge>
+          <CardHeader className="flex flex-row items-start justify-between gap-3 px-6 pb-4 pt-5">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-xl">Library Manifest</CardTitle>
+                <Badge variant="outline">{rows.length} total</Badge>
+              </div>
+              <CardDescription>
+                Active intents remain visually prominent, while inactive intents are
+                de-emphasized for faster scanning.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge>{activeCount} active</Badge>
+              <Badge variant="secondary">{inactiveCount} inactive</Badge>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm">
                 <TableRow>
                   <TableHead>Intent Code</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[140px]">Status</TableHead>
+                  <TableHead className="w-[80px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-                <TableBody>
-                  {rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-                        No intents found. Create a new intent to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
+              <TableBody>
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
+                      No intents found. Create a new intent to get started.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+                {rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className={cn(
+                      row.status === 'inactive' ? 'bg-muted/15 text-muted-foreground' : '',
+                    )}
+                  >
                     <TableCell>
-                      <code
-                        className="inline-block max-w-[220px] truncate rounded-lg bg-secondary px-2.5 py-1 text-xs font-semibold text-primary"
-                        title={row.code}
-                      >
-                        {row.code}
-                      </code>
+                      <div className="flex max-w-[260px] flex-col gap-1">
+                        <code
+                          className={cn(
+                            'inline-block truncate rounded-lg bg-secondary px-2.5 py-1 text-xs font-semibold text-primary',
+                            row.status === 'inactive' ? 'bg-muted text-muted-foreground' : '',
+                          )}
+                          title={row.code}
+                        >
+                          {row.code}
+                        </code>
+                        <span className="truncate text-xs text-muted-foreground">{row.id}</span>
+                      </div>
                     </TableCell>
                     <TableCell
                       className={cn(
-                        'max-w-[420px] break-words',
-                        row.status === 'inactive' ? 'italic text-muted-foreground' : '',
+                        'max-w-[540px] text-sm leading-relaxed',
+                        row.status === 'inactive' ? 'text-muted-foreground' : '',
                       )}
                       title={row.description}
                     >
@@ -319,47 +357,68 @@ export function IntentManagementPage() {
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>
-                    <TableCell>
-                       <div className="flex justify-end gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Edit ${row.code}`}
-                          onClick={() => {
-                            setEditingIntentId(row.id)
-                            setIntentCode(row.code)
-                            setDescription(row.description)
-                            setFormError(null)
-                            setIsFormOpen(true)
-                          }}
-                        >
-                          <Edit />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Delete ${row.code}`}
-                          onClick={() => {
-                            if (!window.confirm(`Delete intent "${row.code}"? This action cannot be undone.`)) return
-                            void deleteMutation.mutateAsync(row.id)
-                          }}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 />
-                        </Button>
-                        <Button asChild variant="outline" size="sm">
-                          <a href={`/intents/${row.id}/utterances`}>Manage utterances</a>
-                        </Button>
-                      </div>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Open actions for ${row.code}`}
+                          >
+                            <Ellipsis />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem
+                              onSelect={(event) => {
+                                event.preventDefault()
+                                setEditingIntentId(row.id)
+                                setIntentCode(row.code)
+                                setDescription(row.description)
+                                setFormError(null)
+                                setIsFormOpen(true)
+                              }}
+                            >
+                              <Edit />
+                              Edit intent
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <a href={`/intents/${row.id}/utterances`}>
+                                <MessageSquareText />
+                                Manage utterances
+                              </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={(event) => {
+                                event.preventDefault()
+                                if (
+                                  !window.confirm(
+                                    `Delete intent "${row.code}"? This action cannot be undone.`,
+                                  )
+                                ) {
+                                  return
+                                }
+                                void deleteMutation.mutateAsync(row.id)
+                              }}
+                              disabled={deleteMutation.isPending}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 />
+                              Delete intent
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <div className="border-t p-4 text-xs text-muted-foreground">
-              <span>
-                Showing {rows.length} {rows.length === 1 ? 'intent' : 'intents'}
-              </span>
+            <div className="border-t px-4 py-3 text-xs text-muted-foreground">
+              Showing {rows.length} {rows.length === 1 ? 'intent' : 'intents'} •
+              {' '}
+              {activeCount} active • {inactiveCount} inactive
             </div>
           </CardContent>
         </Card>

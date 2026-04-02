@@ -1,8 +1,9 @@
 import {
   Copy,
+  LoaderCircle,
   Upload,
 } from 'lucide-react'
-import { useState, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 
 import { AppHeader } from '@/components/layout/AppHeader'
 import { AppSidebar } from '@/components/layout/AppSidebar'
@@ -15,8 +16,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 type SearchResult = {
   intent_code: string
@@ -34,11 +43,13 @@ type SearchResponse = {
 }
 
 export function TestLabPage() {
+  const audioInputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [queryError, setQueryError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [fullResponse, setFullResponse] = useState<SearchResponse | null>(null)
   const [audioError, setAudioError] = useState<string | null>(null)
+  const [lastUploadedFileName, setLastUploadedFileName] = useState<string | null>(null)
   const [inferenceResponse, setInferenceResponse] =
     useState<InferenceIntentResponse | null>(null)
 
@@ -81,6 +92,16 @@ export function TestLabPage() {
   async function onAudioFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
+    setInferenceResponse(null)
+    const fileName = file.name.toLowerCase()
+    const isWav =
+      fileName.endsWith('.wav') ||
+      ['audio/wav', 'audio/wave', 'audio/x-wav'].includes(file.type)
+    if (!isWav) {
+      setAudioError('Only WAV files are supported.')
+      event.target.value = ''
+      return
+    }
     if (file.size > 5 * 1024 * 1024) {
       setAudioError('Audio file is too large. Maximum size is 5MB.')
       event.target.value = ''
@@ -94,6 +115,7 @@ export function TestLabPage() {
     formData.append('request_id', `req-${Date.now()}`)
 
     setAudioError(null)
+    setLastUploadedFileName(file.name)
 
     try {
       const response = await audioMutation.mutateAsync(formData)
@@ -181,7 +203,7 @@ export function TestLabPage() {
                 {searchResults.length === 0 && !searchError ? (
                   <p className="text-sm text-muted-foreground">Run a query to see top intent matches.</p>
                 ) : null}
-                <div className="space-y-0.5">
+                <div className="flex flex-col gap-0.5">
                   {searchResults.map((result) => (
                   <div
                     key={result.intent_code}
@@ -214,7 +236,7 @@ export function TestLabPage() {
                         )
                       }}
                     >
-                      <Copy className="size-4" />
+                      <Copy data-icon="inline-start" />
                       Copy JSON
                     </Button>
                   </div>
@@ -235,27 +257,72 @@ export function TestLabPage() {
             </CardHeader>
 
             <CardContent className="flex flex-col gap-6">
-              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/70 p-3">
-                <Upload className="size-4 text-muted-foreground" />
-                <span className="text-sm">Upload `.wav` file</span>
-                <Input
-                  className="sr-only"
-                  type="file"
-                  accept=".wav,audio/wav"
-                  disabled={audioMutation.isPending}
-                  onChange={onAudioFileChange}
-                />
-              </label>
-              <p className="text-xs text-muted-foreground">
-                WAV only, max size 5MB.
-              </p>
+              <FieldGroup>
+                <Field data-invalid={audioError ? true : undefined}>
+                  <FieldLabel htmlFor="audio-upload">Audio file</FieldLabel>
+                  <FieldDescription>WAV only, max size 5MB.</FieldDescription>
+                  <Input
+                    id="audio-upload"
+                    ref={audioInputRef}
+                    className="sr-only"
+                    type="file"
+                    accept=".wav,audio/wav,audio/x-wav"
+                    aria-invalid={audioError ? true : undefined}
+                    disabled={audioMutation.isPending}
+                    onChange={onAudioFileChange}
+                  />
+                  <div
+                    className={cn(
+                      'flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-background p-3',
+                      audioError && 'border-destructive/40',
+                    )}
+                  >
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        audioInputRef.current?.click()
+                      }}
+                      disabled={audioMutation.isPending}
+                    >
+                      <Upload data-icon="inline-start" />
+                      Choose WAV
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                      {lastUploadedFileName ?? 'No file selected yet.'}
+                    </p>
+                  </div>
+                </Field>
+              </FieldGroup>
+
+              {audioMutation.isPending ? (
+                <Alert className="flex items-center gap-2 px-3 py-2">
+                  <LoaderCircle className="animate-spin text-muted-foreground" />
+                  Analyzing audio inference...
+                </Alert>
+              ) : null}
+              {inferenceResponse ? (
+                <Alert variant="success" className="px-3 py-2">
+                  Analyzed in {inferenceResponse.processing_ms} ms.
+                </Alert>
+              ) : null}
+              {audioError ? (
+                <Alert variant="destructive" className="px-3 py-2">
+                  {audioError}
+                </Alert>
+              ) : null}
+              <Progress
+                value={audioMutation.isPending ? 66 : inferenceResponse ? 100 : 0}
+                aria-label="Audio inference progress"
+              />
 
               <div className="rounded-lg border border-border/70 bg-muted/30 p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Predicted Intent
                 </p>
                 <p className="mt-2 text-xl font-semibold">
-                  {inferenceResponse?.intent_code ?? 'support_request'}
+                  {inferenceResponse?.intent_code ?? 'No result yet'}
                 </p>
                 <p
                   className="mt-1 break-words text-xs text-muted-foreground"
@@ -263,12 +330,12 @@ export function TestLabPage() {
                 >
                   {inferenceResponse?.transcript
                     ? `"${inferenceResponse.transcript}"`
-                    : 'Upload audio to see transcript.'}
+                    : 'Upload a WAV file to see transcript.'}
                 </p>
                 <p className="mt-3 text-sm font-semibold">
                   {inferenceResponse
                     ? `${Math.round(inferenceResponse.confidence * 100)}% confidence`
-                    : 'No audio analyzed yet'}
+                    : 'Inference confidence will appear here'}
                 </p>
               </div>
 
@@ -276,27 +343,25 @@ export function TestLabPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Candidate Ranking
                 </h3>
-                <div className="space-y-0.5">
-                  {(inferenceResponse?.top_candidates ?? [
-                    { intent_code: 'technical_glitch', score: 0.042 },
-                    { intent_code: 'forgot_password', score: 0.015 },
-                  ]).map((candidate) => (
-                  <div
-                    key={candidate.intent_code}
-                    className="flex items-center justify-between border-b border-border/70 py-2.5 text-xs"
-                  >
-                    <span>{candidate.intent_code}</span>
-                    <span className="font-bold text-muted-foreground">
-                      {candidate.score.toFixed(3)}
-                    </span>
+                {inferenceResponse ? (
+                  <div className="flex flex-col gap-0.5">
+                    {inferenceResponse.top_candidates.map((candidate) => (
+                    <div
+                      key={candidate.intent_code}
+                      className="flex items-center justify-between border-b border-border/70 py-2.5 text-xs"
+                    >
+                      <span>{candidate.intent_code}</span>
+                      <span className="font-bold text-muted-foreground">
+                        {candidate.score.toFixed(3)}
+                      </span>
+                    </div>
+                    ))}
                   </div>
-                  ))}
-                </div>
-                {audioError ? (
-                  <Alert variant="destructive" className="px-3 py-2">
-                    {audioError}
+                ) : (
+                  <Alert className="px-3 py-2">
+                    Candidate ranking appears after audio analysis completes.
                   </Alert>
-                ) : null}
+                )}
               </div>
             </CardContent>
           </Card>

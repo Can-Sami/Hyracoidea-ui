@@ -6,6 +6,9 @@ import {
   deleteIntent,
   deleteUtterance,
   getHealth,
+  getOverviewIntentDistribution,
+  getOverviewRecentActivity,
+  getOverviewSummary,
   getReadyz,
   inferIntentFromAudio,
   listIntents,
@@ -16,6 +19,7 @@ import {
   updateUtterance,
 } from './services'
 import type {
+  OverviewTimeRange,
   SearchIntentsRequest,
   UpsertIntentRequest,
   UpsertUtteranceRequest,
@@ -24,6 +28,11 @@ import type {
 const queryKeys = {
   health: ['health'] as const,
   readyz: ['readyz'] as const,
+  overviewSummary: (range: OverviewTimeRange) => ['overview', 'summary', range] as const,
+  overviewIntentDistribution: (range: OverviewTimeRange) =>
+    ['overview', 'intent-distribution', range] as const,
+  overviewRecentActivity: (range: OverviewTimeRange, limit: number) =>
+    ['overview', 'recent-activity', range, limit] as const,
   intents: ['intents'] as const,
   utterances: (intentId: string) => ['utterances', intentId] as const,
 }
@@ -39,6 +48,27 @@ export function useReadyzQuery() {
   return useQuery({
     queryKey: queryKeys.readyz,
     queryFn: getReadyz,
+  })
+}
+
+export function useOverviewSummaryQuery(range: OverviewTimeRange) {
+  return useQuery({
+    queryKey: queryKeys.overviewSummary(range),
+    queryFn: () => getOverviewSummary(range),
+  })
+}
+
+export function useOverviewIntentDistributionQuery(range: OverviewTimeRange) {
+  return useQuery({
+    queryKey: queryKeys.overviewIntentDistribution(range),
+    queryFn: () => getOverviewIntentDistribution(range),
+  })
+}
+
+export function useOverviewRecentActivityQuery(range: OverviewTimeRange, limit = 10) {
+  return useQuery({
+    queryKey: queryKeys.overviewRecentActivity(range, limit),
+    queryFn: () => getOverviewRecentActivity(range, limit),
   })
 }
 

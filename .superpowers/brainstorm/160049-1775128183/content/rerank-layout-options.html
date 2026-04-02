@@ -1,0 +1,61 @@
+<h2>Rerank Panel Layout Options</h2>
+<p class="subtitle">
+  Choose which layout should be added to Test &amp; Inference Lab for
+  <code>/api/v1/intents/search/rerank</code>.
+</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">Option A — Single Card, Expanded Results</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Query | Language Hint | k | Execute</div>
+          <div class="mock-content">Result rows: intent_code, semantic_score, reranker_score</div>
+          <div class="placeholder">Raw JSON preview below table</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Compact and direct</h3>
+      <p>Add a third card to the existing grid with full rerank controls and response.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">Option B — Two-Step Visual in One Card</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Query | Language Hint | k | Execute</div>
+          <div style="display:flex; gap:8px;">
+            <div class="mock-content">Semantic top-K (left)</div>
+            <div class="mock-content">Reranked output (right)</div>
+          </div>
+          <div class="placeholder">Score delta highlight</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Best for analysis</h3>
+      <p>Shows before/after ranking side by side to compare semantic vs reranker behavior.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">Option C — Tabbed Search Card</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Tab 1: Semantic Search | Tab 2: Rerank Search</div>
+          <div class="mock-content">Shared input controls inside active tab</div>
+          <div class="placeholder">Results and JSON for selected tab</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Cleaner page footprint</h3>
+      <p>Combines semantic and rerank into one card with tabs; saves vertical space.</p>
+    </div>
+  </div>
+</div>
