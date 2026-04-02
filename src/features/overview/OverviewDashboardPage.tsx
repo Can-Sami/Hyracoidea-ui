@@ -1,11 +1,19 @@
 import { Activity, CalendarDays, CircleCheckBig, RefreshCcw } from 'lucide-react'
+import { useMemo } from 'react'
 
 import { AppHeader } from '@/components/layout/AppHeader'
 import { AppSidebar } from '@/components/layout/AppSidebar'
-import { useHealthQuery, useReadyzQuery } from '@/lib/api/hooks'
+import {
+  useHealthQuery,
+  useOverviewIntentDistributionQuery,
+  useOverviewRecentActivityQuery,
+  useOverviewSummaryQuery,
+  useReadyzQuery,
+} from '@/lib/api/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Alert } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import {
   Table,
@@ -17,68 +25,42 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
-type InferenceRow = {
-  timestamp: string
-  input: string
-  intent: string
-  confidence: number
-}
-
-type Distribution = {
-  label: string
-  value: number
-}
-
-const inferenceRows: InferenceRow[] = [
-  {
-    timestamp: '14:20:45.02',
-    input: 'I need to reset my password',
-    intent: 'auth_reset',
-    confidence: 0.98,
-  },
-  {
-    timestamp: '14:20:42.88',
-    input: 'Check delivery status',
-    intent: 'order_track',
-    confidence: 0.94,
-  },
-  {
-    timestamp: '14:20:38.15',
-    input: 'Can I change my address?',
-    intent: 'user_update',
-    confidence: 0.81,
-  },
-  {
-    timestamp: '14:20:30.50',
-    input: 'Talk to human',
-    intent: 'escalate_rep',
-    confidence: 0.99,
-  },
-  {
-    timestamp: '14:20:25.12',
-    input: 'Refund policy for orders',
-    intent: 'policy_query',
-    confidence: 0.89,
-  },
-]
-
-const distributions: Distribution[] = [
-  { label: 'Order Tracking', value: 42 },
-  { label: 'Auth & Login', value: 28 },
-  { label: 'Billing Inquiries', value: 15 },
-  { label: 'Returns', value: 10 },
-  { label: 'Technical Support', value: 5 },
-]
-
 function confidenceBarClass(confidence: number) {
   if (confidence >= 0.9) return 'bg-emerald-500'
   if (confidence >= 0.8) return 'bg-amber-500'
   return 'bg-primary'
 }
 
+function toPercent(value: number) {
+  return `${Math.round(value * 100)}%`
+}
+
+function formatDelta(value: number | null) {
+  if (value === null) return '—'
+  const direction = value > 0 ? '+' : ''
+  return `${direction}${value.toFixed(2)}%`
+}
+
+function toIsoRangeLast24Hours(now: Date) {
+  const end = new Date(now)
+  const start = new Date(now)
+  start.setHours(start.getHours() - 24)
+  return {
+    start_at: start.toISOString(),
+    end_at: end.toISOString(),
+  }
+}
+
 export function OverviewDashboardPage() {
+  const timeframe = useMemo(() => toIsoRangeLast24Hours(new Date()), [])
   const healthQuery = useHealthQuery()
   const readyzQuery = useReadyzQuery()
+  const summaryQuery = useOverviewSummaryQuery(timeframe)
+  const distributionQuery = useOverviewIntentDistributionQuery(timeframe)
+  const recentActivityQuery = useOverviewRecentActivityQuery(timeframe, 10)
+
+  const hasOverviewError =
+    summaryQuery.isError || distributionQuery.isError || recentActivityQuery.isError
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,10 +68,10 @@ export function OverviewDashboardPage() {
 
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-8 px-8 pb-10 pt-24">
+      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
         <section className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">
+            <h2 className="text-[clamp(1.6rem,2.5vw,2.2rem)] font-semibold tracking-tight">
               Overview Dashboard
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -108,6 +90,9 @@ export function OverviewDashboardPage() {
               onClick={() => {
                 void healthQuery.refetch()
                 void readyzQuery.refetch()
+                void summaryQuery.refetch()
+                void distributionQuery.refetch()
+                void recentActivityQuery.refetch()
               }}
             >
               <RefreshCcw />
@@ -116,9 +101,16 @@ export function OverviewDashboardPage() {
         </section>
 
         {healthQuery.isError || readyzQuery.isError ? (
-          <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="destructive">
             {healthQuery.error?.message ?? readyzQuery.error?.message}
-          </p>
+          </Alert>
+        ) : null}
+        {hasOverviewError ? (
+          <Alert variant="destructive">
+            {summaryQuery.error?.message ??
+              distributionQuery.error?.message ??
+              recentActivityQuery.error?.message}
+          </Alert>
         ) : null}
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -130,8 +122,14 @@ export function OverviewDashboardPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex items-end gap-2">
-                <p className="text-3xl font-bold">1.28M</p>
-                <Badge variant="secondary">+12%</Badge>
+                <p className="text-3xl font-semibold">
+                  {summaryQuery.data?.total_inferences ?? '—'}
+                </p>
+                {summaryQuery.data ? (
+                  <Badge variant="secondary">
+                    {formatDelta(summaryQuery.data.total_inferences_delta_pct)}
+                  </Badge>
+                ) : null}
               </div>
               <Progress value={75} className="h-1.5" />
             </CardContent>
@@ -145,8 +143,14 @@ export function OverviewDashboardPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex items-end gap-2">
-                <p className="text-3xl font-bold">94.2%</p>
-                <Badge variant="outline">-0.4%</Badge>
+                <p className="text-3xl font-bold">
+                  {summaryQuery.data ? toPercent(summaryQuery.data.avg_confidence) : '—'}
+                </p>
+                {summaryQuery.data ? (
+                  <Badge variant="outline">
+                    {formatDelta(summaryQuery.data.avg_confidence_delta_pct)}
+                  </Badge>
+                ) : null}
               </div>
               <div className="grid h-8 grid-cols-5 items-end gap-1">
                 <div className="h-1/2 rounded-t bg-primary/20" />
@@ -218,17 +222,17 @@ export function OverviewDashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {inferenceRows.map((row) => (
-                      <TableRow key={`${row.timestamp}-${row.intent}`}>
+                    {(recentActivityQuery.data?.items ?? []).map((row) => (
+                      <TableRow key={`${row.timestamp}-${row.input_snippet}`}>
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {row.timestamp}
                         </TableCell>
-                        <TableCell className="max-w-[250px] truncate" title={row.input}>
-                          {row.input}
+                        <TableCell className="max-w-[250px] truncate" title={row.input_snippet}>
+                          {row.input_snippet}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="uppercase">
-                            {row.intent}
+                            {row.predicted_intent ?? 'unmatched'}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -247,6 +251,13 @@ export function OverviewDashboardPage() {
                         </TableCell>
                       </TableRow>
                     ))}
+                    {(recentActivityQuery.data?.items.length ?? 0) === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                          No recent activity in the selected timeframe.
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -259,23 +270,28 @@ export function OverviewDashboardPage() {
             </div>
             <Card className="border-border/70 shadow-sm">
               <CardContent className="flex flex-col gap-5 p-6">
-                {distributions.map((entry, index) => (
-                  <div key={entry.label} className="flex flex-col gap-2">
+                {(distributionQuery.data?.items ?? []).map((entry, index) => (
+                  <div key={entry.intent_code} className="flex flex-col gap-2">
                     <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide">
-                      <span>{entry.label}</span>
-                      <span className="text-muted-foreground">{entry.value}%</span>
+                      <span>{entry.intent_code}</span>
+                      <span className="text-muted-foreground">{entry.percentage.toFixed(2)}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted">
                       <div
                         className="h-2 rounded-full bg-primary"
                         style={{
-                          width: `${entry.value}%`,
+                          width: `${entry.percentage}%`,
                           opacity: `${Math.max(0.2, 1 - index * 0.18)}`,
                         }}
                       />
                     </div>
                   </div>
                 ))}
+                {(distributionQuery.data?.items.length ?? 0) === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No distribution data in the selected timeframe.
+                  </p>
+                ) : null}
                 <Button variant="outline" size="sm" className="mt-3">
                   View Detailed Metrics
                 </Button>

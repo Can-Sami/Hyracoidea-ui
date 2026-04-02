@@ -69,3 +69,32 @@ export type InferenceIntentResponse = {
   top_candidates: Array<{ intent_code: string; score: number }>
   processing_ms: number
 }
+
+export type OverviewTimeRange = {
+  start_at: string
+  end_at: string
+}
+
+export type OverviewSummaryResponse = {
+  total_inferences: number
+  avg_confidence: number
+  total_inferences_delta_pct: number | null
+  avg_confidence_delta_pct: number | null
+}
+
+export type OverviewIntentDistributionResponse = {
+  items: Array<{
+    intent_code: string
+    count: number
+    percentage: number
+  }>
+}
+
+export type OverviewRecentActivityResponse = {
+  items: Array<{
+    timestamp: string
+    input_snippet: string
+    predicted_intent: string | null
+    confidence: number
+  }>
+}

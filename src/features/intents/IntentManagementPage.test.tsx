@@ -96,6 +96,36 @@ describe('IntentManagementPage', () => {
     )
   })
 
+
+
+  it('shows validation error when intent code is invalid', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderWithQueryClient()
+
+    fireEvent.click(await screen.findByRole('button', { name: /open create intent form/i }))
+    fireEvent.change(screen.getByLabelText(/intent code/i), {
+      target: { value: 'invalid code' },
+    })
+    fireEvent.change(screen.getByLabelText(/intent description/i), {
+      target: { value: 'desc' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+
+    expect(
+      await screen.findByText(/Intent code can only contain letters, numbers, underscores, and hyphens./i),
+    ).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
   it('creates an intent from the form', async () => {
     const fetchMock = vi
       .fn()

@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -27,18 +28,23 @@ export function IntentUtterancesPage() {
   const [newText, setNewText] = useState('')
   const [newLanguageCode, setNewLanguageCode] = useState('tr')
   const [newSource, setNewSource] = useState('manual')
+  const [createError, setCreateError] = useState<string | null>(null)
+
+  const items = utterancesQuery.data?.items ?? []
 
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar activePage="intents" />
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-8 px-10 pb-10 pt-24">
-        <section className="flex flex-wrap items-start justify-between gap-4">
+      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
+        <section className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">Utterance Management</h2>
+            <h2 className="text-[clamp(1.6rem,2.4vw,2.15rem)] font-semibold tracking-tight">
+              Utterance Management
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Manage utterances for intent <code>{intentId}</code>.
+              Add and edit training phrases for intent <code>{intentId}</code>.
             </p>
           </div>
           <Button
@@ -47,65 +53,117 @@ export function IntentUtterancesPage() {
               void navigate({ to: '/intents' })
             }}
           >
-            <ArrowLeft data-icon="inline-start" />
-            Back to intents
-          </Button>
+              <ArrowLeft data-icon="inline-start" />
+              Back to intent list
+            </Button>
         </section>
 
         {(utterancesQuery.isError || createMutation.isError || updateMutation.isError || deleteMutation.isError) ? (
-          <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="destructive">
             {utterancesQuery.error?.message ||
               createMutation.error?.message ||
               updateMutation.error?.message ||
               deleteMutation.error?.message}
-          </p>
+          </Alert>
         ) : null}
 
-        <Card className="border-border/70 shadow-sm">
+        <Card className="max-w-4xl border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle className="text-xl">Add Utterance</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex flex-col gap-4">
+            {createError ? (
+              <Alert variant="destructive" className="px-3 py-2">
+                {createError}
+              </Alert>
+            ) : null}
             <Textarea
               aria-label="Utterance text"
-              placeholder="Enter utterance text"
+              placeholder="e.g. I need help resetting my password"
               value={newText}
-              onChange={(event) => setNewText(event.target.value)}
+              maxLength={500}
+              className="min-h-28"
+              onChange={(event) => {
+                setNewText(event.target.value)
+                if (createError) setCreateError(null)
+              }}
             />
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Input
                 aria-label="Language code"
                 value={newLanguageCode}
-                onChange={(event) => setNewLanguageCode(event.target.value)}
+                maxLength={12}
+                onChange={(event) => {
+                  setNewLanguageCode(event.target.value)
+                  if (createError) setCreateError(null)
+                }}
                 placeholder="tr"
               />
               <Input
                 aria-label="Source"
                 value={newSource}
-                onChange={(event) => setNewSource(event.target.value)}
+                maxLength={60}
+                onChange={(event) => {
+                  setNewSource(event.target.value)
+                  if (createError) setCreateError(null)
+                }}
                 placeholder="manual"
               />
             </div>
+            <p className="text-xs text-muted-foreground">
+              Text: up to 500 characters. Language code: up to 12 characters (example: tr, en-US). Source: up to 60 characters.
+            </p>
             <Button
               onClick={async () => {
-                if (!newText.trim()) return
-                await createMutation.mutateAsync({
-                  text: newText.trim(),
-                  language_code: newLanguageCode.trim() || 'tr',
-                  source: newSource.trim() || 'manual',
-                })
+                const trimmedText = newText.trim()
+                const languageCode = newLanguageCode.trim() || 'tr'
+                const source = newSource.trim() || 'manual'
+
+                if (!trimmedText) {
+                  setCreateError('Utterance text is required.')
+                  return
+                }
+                if (trimmedText.length > 500 || languageCode.length > 12 || source.length > 60) {
+                  setCreateError('Please shorten values to fit the allowed lengths.')
+                  return
+                }
+                if (!/^[A-Za-z-]+$/.test(languageCode)) {
+                  setCreateError('Language code can only include letters and hyphens (e.g. tr, en-US).')
+                  return
+                }
+
+                try {
+                  await createMutation.mutateAsync({
+                    text: trimmedText,
+                    language_code: languageCode,
+                    source,
+                  })
+                } catch (error) {
+                  setCreateError(
+                    error instanceof Error ? error.message : 'Failed to add utterance.',
+                  )
+                  return
+                }
                 setNewText('')
+                setCreateError(null)
               }}
               disabled={createMutation.isPending}
             >
               <Plus data-icon="inline-start" />
-              {createMutation.isPending ? 'Adding...' : 'Add utterance'}
+              {createMutation.isPending ? 'Adding utterance...' : 'Add utterance'}
             </Button>
           </CardContent>
         </Card>
 
-        <section className="grid grid-cols-1 gap-4">
-          {(utterancesQuery.data?.items ?? []).map((utterance) => (
+        <section className="grid grid-cols-1 gap-5">
+          {items.length === 0 && !utterancesQuery.isError ? (
+            <Card className="border-border/70 shadow-sm">
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                No utterances yet. Add the first utterance above.
+              </CardContent>
+            </Card>
+          ) : null}
+          {items.map((utterance) => (
             <UtteranceCard
               key={utterance.id}
               utteranceId={utterance.id}
@@ -147,36 +205,102 @@ function UtteranceCard({
   const [text, setText] = useState(initialText)
   const [languageCode, setLanguageCode] = useState(initialLanguageCode)
   const [source, setSource] = useState(initialSource)
+  const [cardError, setCardError] = useState<string | null>(null)
 
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
         <CardTitle className="text-sm">
-          <Badge variant="outline">{utteranceId}</Badge>
+          <Badge variant="outline" className="max-w-full truncate" title={utteranceId}>
+            {utteranceId}
+          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <Textarea value={text} onChange={(event) => setText(event.target.value)} />
-        <div className="flex flex-wrap gap-3">
-          <Input value={languageCode} onChange={(event) => setLanguageCode(event.target.value)} />
-          <Input value={source} onChange={(event) => setSource(event.target.value)} />
+      <CardContent className="flex flex-col gap-4">
+        {cardError ? (
+          <Alert variant="destructive" className="px-3 py-2">
+            {cardError}
+          </Alert>
+        ) : null}
+        <Textarea
+          value={text}
+          maxLength={500}
+          className="min-h-24"
+          onChange={(event) => {
+            setText(event.target.value)
+            if (cardError) setCardError(null)
+          }}
+        />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Input
+            value={languageCode}
+            maxLength={12}
+            onChange={(event) => {
+              setLanguageCode(event.target.value)
+              if (cardError) setCardError(null)
+            }}
+          />
+          <Input
+            value={source}
+            maxLength={60}
+            onChange={(event) => {
+              setSource(event.target.value)
+              if (cardError) setCardError(null)
+            }}
+          />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2.5 pt-1">
           <Button
             variant="outline"
             disabled={isBusy}
-            onClick={() =>
-              onSave({
-                text: text.trim(),
-                language_code: languageCode.trim() || 'tr',
-                source: source.trim() || 'manual',
-              })
-            }
+            onClick={async () => {
+              const trimmedText = text.trim()
+              const trimmedLanguageCode = languageCode.trim() || 'tr'
+              const trimmedSource = source.trim() || 'manual'
+
+              if (!trimmedText) {
+                setCardError('Utterance text is required.')
+                return
+              }
+              if (
+                trimmedText.length > 500 ||
+                trimmedLanguageCode.length > 12 ||
+                trimmedSource.length > 60
+              ) {
+                setCardError('Please shorten values to fit the allowed lengths.')
+                return
+              }
+              if (!/^[A-Za-z-]+$/.test(trimmedLanguageCode)) {
+                setCardError('Language code can only include letters and hyphens.')
+                return
+              }
+
+              try {
+                await onSave({
+                  text: trimmedText,
+                  language_code: trimmedLanguageCode,
+                  source: trimmedSource,
+                })
+              } catch (error) {
+                setCardError(
+                  error instanceof Error ? error.message : 'Failed to save utterance.',
+                )
+                return
+              }
+              setCardError(null)
+            }}
           >
             <Save data-icon="inline-start" />
             Save
           </Button>
-          <Button variant="destructive" disabled={isBusy} onClick={() => onDelete()}>
+          <Button
+            variant="destructive"
+            disabled={isBusy}
+            onClick={() => {
+              if (!window.confirm('Delete this utterance? This action cannot be undone.')) return
+              void onDelete()
+            }}
+          >
             <Trash2 data-icon="inline-start" />
             Delete
           </Button>

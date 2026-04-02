@@ -5,6 +5,10 @@ import type {
   InferenceIntentResponse,
   ListUtterancesResponse,
   ListIntentsResponse,
+  OverviewIntentDistributionResponse,
+  OverviewRecentActivityResponse,
+  OverviewSummaryResponse,
+  OverviewTimeRange,
   ReadyzResponse,
   ReindexResponse,
   SearchIntentsRequest,
@@ -24,6 +28,35 @@ export function getHealth() {
 
 export function getReadyz() {
   return client.get<ReadyzResponse>(apiUrl('/api/readyz'))
+}
+
+function toOverviewQuery(range: OverviewTimeRange, limit?: number) {
+  const query = new URLSearchParams({
+    start_at: range.start_at,
+    end_at: range.end_at,
+  })
+  if (typeof limit === 'number') {
+    query.set('limit', String(limit))
+  }
+  return query.toString()
+}
+
+export function getOverviewSummary(range: OverviewTimeRange) {
+  return client.get<OverviewSummaryResponse>(
+    apiUrl(`/api/v1/overview/summary?${toOverviewQuery(range)}`),
+  )
+}
+
+export function getOverviewIntentDistribution(range: OverviewTimeRange) {
+  return client.get<OverviewIntentDistributionResponse>(
+    apiUrl(`/api/v1/overview/intent-distribution?${toOverviewQuery(range)}`),
+  )
+}
+
+export function getOverviewRecentActivity(range: OverviewTimeRange, limit = 10) {
+  return client.get<OverviewRecentActivityResponse>(
+    apiUrl(`/api/v1/overview/recent-activity?${toOverviewQuery(range, limit)}`),
+  )
 }
 
 export function listIntents() {
