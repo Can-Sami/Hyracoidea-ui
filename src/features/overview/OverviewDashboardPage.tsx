@@ -6,6 +6,7 @@ import { useHealthQuery, useReadyzQuery } from '@/lib/api/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Alert } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import {
   Table,
@@ -86,10 +87,10 @@ export function OverviewDashboardPage() {
 
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-8 px-8 pb-10 pt-24">
+      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
         <section className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">
+            <h2 className="text-[clamp(1.6rem,2.5vw,2.2rem)] font-semibold tracking-tight">
               Overview Dashboard
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -116,9 +117,9 @@ export function OverviewDashboardPage() {
         </section>
 
         {healthQuery.isError || readyzQuery.isError ? (
-          <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="destructive">
             {healthQuery.error?.message ?? readyzQuery.error?.message}
-          </p>
+          </Alert>
         ) : null}
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -128,11 +129,11 @@ export function OverviewDashboardPage() {
                 Total Inferences
               </p>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex items-end gap-2">
-                <p className="text-3xl font-bold">1.28M</p>
-                <Badge variant="secondary">+12%</Badge>
-              </div>
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex items-end gap-2">
+                  <p className="text-3xl font-semibold">1.28M</p>
+                  <Badge variant="secondary">+12%</Badge>
+                </div>
               <Progress value={75} className="h-1.5" />
             </CardContent>
           </Card>

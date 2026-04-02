@@ -1,18 +1,10 @@
-import type { ComponentProps, ComponentType } from 'react'
 import { useState } from 'react'
 import {
-  Bot,
-  ChevronLeft,
-  ChevronRight,
-  Download,
   Edit,
-  Filter,
   Plus,
   RefreshCcw,
   Save,
   Trash2,
-  TreePine,
-  TrendingUp,
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/layout/AppHeader'
@@ -27,7 +19,22 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert } from '@/components/ui/alert'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
@@ -39,80 +46,11 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
-type Metric = {
-  label: string
-  value: string
-  hint: string
-  icon: ComponentType<ComponentProps<'svg'>>
-  delta?: string
-}
-
 type IntentRow = {
   id: string
   code: string
   description: string
   status: 'active' | 'inactive'
-  utterances: number
-}
-
-type SuggestionCard = {
-  utterances: number
-  text: string
-}
-
-const metrics: Metric[] = [
-  {
-    label: 'Total Intents',
-    value: '142',
-    hint: 'since last release',
-    icon: TreePine,
-    delta: '+12',
-  },
-  {
-    label: 'Active Coverage',
-    value: '98.4%',
-    hint: 'Global intent recognition rate',
-    icon: Bot,
-  },
-  {
-    label: 'Total Utterances',
-    value: '2.4k',
-    hint: 'Training samples across library',
-    icon: TrendingUp,
-  },
-]
-
-const suggestions: SuggestionCard[] = [
-  {
-    utterances: 32,
-    text: 'I want to change my delivery address after shipping',
-  },
-  {
-    utterances: 18,
-    text: "Apply promo code from yesterday's email",
-  },
-]
-
-function MetricCard({ metric }: { metric: Metric }) {
-  const Icon = metric.icon
-
-  return (
-    <Card className="border-border/70 shadow-sm">
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {metric.label}
-        </p>
-        <Icon className="text-muted-foreground" />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <p className="text-4xl font-bold tracking-tight">{metric.value}</p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {metric.delta ? <Badge variant="secondary">{metric.delta}</Badge> : null}
-          <span>{metric.hint}</span>
-        </div>
-      </CardContent>
-    </Card>
-  )
 }
 
 function StatusBadge({ status }: Pick<IntentRow, 'status'>) {
@@ -133,6 +71,7 @@ export function IntentManagementPage() {
   const deleteMutation = useDeleteIntentMutation()
   const [intentCode, setIntentCode] = useState('')
   const [description, setDescription] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
   const [editingIntentId, setEditingIntentId] = useState<string | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
 
@@ -141,7 +80,6 @@ export function IntentManagementPage() {
     code: item.intent_code,
     description: item.description,
     status: item.is_active ? 'active' : 'inactive',
-    utterances: 0,
   }))
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending
@@ -149,7 +87,13 @@ export function IntentManagementPage() {
     setEditingIntentId(null)
     setIntentCode('')
     setDescription('')
+    setFormError(null)
     setIsFormOpen(true)
+  }
+  const closeForm = () => {
+    setIsFormOpen(false)
+    setEditingIntentId(null)
+    setFormError(null)
   }
 
   return (
@@ -158,19 +102,19 @@ export function IntentManagementPage() {
 
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-8 px-10 pb-10 pt-24">
-        <section className="flex flex-wrap items-start justify-between gap-4">
+      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
+        <section className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-2xl">
-            <h2 className="text-3xl font-extrabold tracking-tight">
+            <h2 className="text-[clamp(1.6rem,2.4vw,2.15rem)] font-semibold tracking-tight">
               Intent Management
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Configure and maintain the semantic library of user intents.
-              Changes to active intents require a reindex before deployment.
+              Add, update, and review the intents your model can route.
+              Reindex after changing active intents so new behavior is available.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Button
               variant="outline"
               onClick={() => {
@@ -181,117 +125,158 @@ export function IntentManagementPage() {
               <RefreshCcw data-icon="inline-start" />
               {reindexMutation.isPending ? 'Reindexing...' : 'Reindex All'}
             </Button>
-            <Button
-              className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
-              onClick={openCreateForm}
-            >
+            <Button aria-label="Open create intent form" onClick={openCreateForm}>
               <Plus data-icon="inline-start" />
               New Intent
             </Button>
           </div>
         </section>
-        <div className="flex gap-2">
-          <Button
-            aria-label="Open create intent form"
-            onClick={openCreateForm}
-          >
-            <Plus data-icon="inline-start" />
-            Create Intent
-          </Button>
-        </div>
 
-        {isFormOpen ? (
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>{editingIntentId ? 'Edit Intent' : 'Create Intent'}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Input
-                aria-label="Intent code"
-                placeholder="balance_inquiry"
-                value={intentCode}
-                onChange={(event) => setIntentCode(event.target.value)}
-              />
-              <Textarea
-                aria-label="Intent description"
-                placeholder="Customer asks account balance"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={async () => {
-                    const body = {
-                      intent_code: intentCode.trim(),
-                      description: description.trim(),
-                    }
-                    if (!body.intent_code || !body.description) return
+        <Dialog
+          open={isFormOpen}
+          onOpenChange={(open) => {
+            if (!open && !isSubmitting) {
+              closeForm()
+            }
+          }}
+        >
+          <DialogContent className="max-w-xl rounded-2xl border-border/70 bg-card p-0 shadow-[0_14px_44px_-28px_hsl(var(--foreground)/0.45)]">
+            <DialogHeader className="gap-2 border-b border-border/60 px-6 pb-5 pt-6 text-left">
+              <DialogTitle>{editingIntentId ? 'Edit Intent' : 'Create Intent'}</DialogTitle>
+              <DialogDescription>
+                Define the routing key and a clear description so operators can scan the
+                library quickly.
+              </DialogDescription>
+            </DialogHeader>
 
+            <div className="px-6 py-5">
+              <FieldGroup className="gap-4">
+                {formError ? (
+                  <Alert variant="destructive" className="px-3 py-2">
+                    {formError}
+                  </Alert>
+                ) : null}
+
+                <Field data-invalid={!!formError}>
+                  <FieldLabel htmlFor="intent-code">Intent code</FieldLabel>
+                  <Input
+                    id="intent-code"
+                    aria-label="Intent code"
+                    aria-invalid={!!formError}
+                    placeholder="e.g. balance_inquiry"
+                    value={intentCode}
+                    maxLength={80}
+                    onChange={(event) => {
+                      setIntentCode(event.target.value)
+                      if (formError) setFormError(null)
+                    }}
+                  />
+                </Field>
+
+                <Field data-invalid={!!formError}>
+                  <FieldLabel htmlFor="intent-description">Intent description</FieldLabel>
+                  <Textarea
+                    id="intent-description"
+                    aria-label="Intent description"
+                    aria-invalid={!!formError}
+                    placeholder="Describe when this intent should be selected"
+                    value={description}
+                    maxLength={300}
+                    className="min-h-28"
+                    onChange={(event) => {
+                      setDescription(event.target.value)
+                      if (formError) setFormError(null)
+                    }}
+                  />
+                  <FieldDescription>
+                    Intent code supports letters, numbers, underscores, and hyphens.
+                    Description supports up to 300 characters.
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
+            </div>
+
+            <DialogFooter className="gap-2 border-t border-border/60 px-6 pb-6 pt-4 sm:justify-end">
+              <Button variant="outline" onClick={closeForm} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  const body = {
+                    intent_code: intentCode.trim(),
+                    description: description.trim(),
+                  }
+                  if (!body.intent_code || !body.description) {
+                    setFormError('Both intent code and description are required.')
+                    return
+                  }
+                  if (body.intent_code.length > 80 || body.description.length > 300) {
+                    setFormError('Please shorten values to fit the allowed lengths.')
+                    return
+                  }
+                  if (!/^[\p{L}\p{N}_-]+$/u.test(body.intent_code)) {
+                    setFormError(
+                      'Intent code can only contain letters, numbers, underscores, and hyphens.',
+                    )
+                    return
+                  }
+
+                  try {
                     if (editingIntentId) {
                       await updateMutation.mutateAsync({ intentId: editingIntentId, body })
                     } else {
                       await createMutation.mutateAsync(body)
                     }
-                    setIsFormOpen(false)
-                    setEditingIntentId(null)
-                    setIntentCode('')
-                    setDescription('')
-                  }}
-                  disabled={isSubmitting}
-                >
-                  <Save data-icon="inline-start" />
-                  {isSubmitting ? 'Saving...' : 'Save'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsFormOpen(false)
-                    setEditingIntentId(null)
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
+                  } catch (error) {
+                    setFormError(
+                      error instanceof Error ? error.message : 'Failed to save intent.',
+                    )
+                    return
+                  }
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {metrics.map((metric) => (
-            <MetricCard key={metric.label} metric={metric} />
-          ))}
-        </section>
+                  closeForm()
+                  setIntentCode('')
+                  setDescription('')
+                }}
+                disabled={isSubmitting}
+              >
+                <Save data-icon="inline-start" />
+                {isSubmitting ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {intentsQuery.isError || createMutation.isError || updateMutation.isError || deleteMutation.isError ? (
-          <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="destructive">
             {intentsQuery.error?.message ||
               createMutation.error?.message ||
               updateMutation.error?.message ||
               deleteMutation.error?.message}
-          </p>
+            <Button
+              variant="link"
+              size="sm"
+              className="ml-2 h-auto p-0 text-destructive"
+              onClick={() => {
+                void intentsQuery.refetch()
+              }}
+            >
+              Retry
+            </Button>
+          </Alert>
         ) : null}
 
         {reindexMutation.isSuccess ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          <Alert variant="success">
             {reindexMutation.data.reindexed_count} intents reindexed
-          </p>
+          </Alert>
         ) : null}
 
         <Card className="border-border/70 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 px-6 pb-4 pt-5">
             <div className="flex items-center gap-3">
               <CardTitle className="text-xl">Library Manifest</CardTitle>
-                <Badge variant="secondary">{rows.length} total</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Filter data-icon="inline-start" />
-                Filter
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Download data-icon="inline-start" />
-                Export
-              </Button>
+              <Badge variant="outline">{rows.length} total</Badge>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -301,21 +286,30 @@ export function IntentManagementPage() {
                   <TableHead>Intent Code</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Utterances</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+                <TableBody>
+                  {rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                        No intents found. Create a new intent to get started.
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
                   {rows.map((row) => (
                     <TableRow key={row.id}>
                     <TableCell>
-                      <code className="rounded-md bg-muted px-2 py-1 text-xs font-semibold text-primary">
+                      <code
+                        className="inline-block max-w-[220px] truncate rounded-lg bg-secondary px-2.5 py-1 text-xs font-semibold text-primary"
+                        title={row.code}
+                      >
                         {row.code}
                       </code>
                     </TableCell>
                     <TableCell
                       className={cn(
-                        'max-w-[420px] truncate',
+                        'max-w-[420px] break-words',
                         row.status === 'inactive' ? 'italic text-muted-foreground' : '',
                       )}
                       title={row.description}
@@ -325,11 +319,8 @@ export function IntentManagementPage() {
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>
-                    <TableCell className="text-center font-semibold text-muted-foreground">
-                      {row.utterances}
-                    </TableCell>
                     <TableCell>
-                      <div className="flex justify-end gap-1">
+                       <div className="flex justify-end gap-1.5">
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -338,6 +329,7 @@ export function IntentManagementPage() {
                             setEditingIntentId(row.id)
                             setIntentCode(row.code)
                             setDescription(row.description)
+                            setFormError(null)
                             setIsFormOpen(true)
                           }}
                         >
@@ -348,13 +340,15 @@ export function IntentManagementPage() {
                           size="icon-sm"
                           aria-label={`Delete ${row.code}`}
                           onClick={() => {
+                            if (!window.confirm(`Delete intent "${row.code}"? This action cannot be undone.`)) return
                             void deleteMutation.mutateAsync(row.id)
                           }}
+                          disabled={deleteMutation.isPending}
                         >
                           <Trash2 />
                         </Button>
                         <Button asChild variant="outline" size="sm">
-                          <a href={`/intents/${row.id}/utterances`}>Utterances</a>
+                          <a href={`/intents/${row.id}/utterances`}>Manage utterances</a>
                         </Button>
                       </div>
                     </TableCell>
@@ -362,123 +356,13 @@ export function IntentManagementPage() {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex items-center justify-between border-t p-4 text-xs text-muted-foreground">
+            <div className="border-t p-4 text-xs text-muted-foreground">
               <span>
-                Showing {rows.length === 0 ? 0 : 1} to {rows.length} of {rows.length}{' '}
-                intents
+                Showing {rows.length} {rows.length === 1 ? 'intent' : 'intents'}
               </span>
-              <div className="flex items-center gap-1">
-                <Button size="icon-xs" variant="outline" disabled aria-label="Previous page">
-                  <ChevronLeft />
-                </Button>
-                <Button size="icon-xs" aria-label="Page 1">
-                  1
-                </Button>
-                <Button size="icon-xs" variant="ghost" aria-label="Page 2">
-                  2
-                </Button>
-                <Button size="icon-xs" variant="ghost" aria-label="Page 3">
-                  3
-                </Button>
-                <span className="px-1">...</span>
-                <Button size="icon-xs" variant="ghost" aria-label="Page 29">
-                  29
-                </Button>
-                <Button size="icon-xs" variant="outline" aria-label="Next page">
-                  <ChevronRight />
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
-
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          <Card className="border-border/70 shadow-sm lg:col-span-8">
-            <CardHeader className="flex flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Bot />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Intent Suggestion Engine</CardTitle>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Unlabeled Clustering Analysis
-                  </p>
-                </div>
-              </div>
-              <Button variant="link" size="sm">
-                See all clusters
-              </Button>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {suggestions.map((suggestion) => (
-                <Card key={suggestion.text} className="border-dashed">
-                  <CardContent className="flex flex-col gap-4 p-4">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary">Detection</Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {suggestion.utterances} utterances
-                      </span>
-                    </div>
-                    <p className="font-medium">"{suggestion.text}"</p>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="self-end"
-                      onClick={() => {
-                        setEditingIntentId(null)
-                        setIntentCode('')
-                        setDescription(suggestion.text)
-                        setIsFormOpen(true)
-                      }}
-                    >
-                      CREATE INTENT
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground lg:col-span-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Indexing Health</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
-                  <span>Semantic Map</span>
-                  <span>92%</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/20">
-                  <div className="h-2 w-[92%] rounded-full bg-white" />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
-                  <span>Collection Stale</span>
-                  <span>8m</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/20">
-                  <div className="h-2 w-[40%] rounded-full bg-white" />
-                </div>
-              </div>
-
-              <p className="rounded-lg border border-white/15 bg-white/10 p-3 text-xs leading-relaxed">
-                The indexing cluster is currently optimal. Last global reindex
-                completed at 14:22 UTC without latency flags.
-              </p>
-
-              <Button
-                variant="secondary"
-                className="mt-2 bg-white text-primary hover:bg-white/90"
-              >
-                View Model Logs
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
       </main>
     </div>
   )

@@ -57,6 +57,25 @@ describe('IntentUtterancesPage', () => {
     )
   })
 
+
+
+  it('shows validation error when utterance text is empty', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ items: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderUtterancesRoute()
+
+    fireEvent.click(await screen.findByRole('button', { name: /add utterance/i }))
+
+    expect(await screen.findByText(/utterance text is required/i)).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
   it('adds a new utterance', async () => {
     const fetchMock = vi
       .fn()

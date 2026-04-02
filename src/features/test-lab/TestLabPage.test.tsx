@@ -50,6 +50,19 @@ describe('TestLabPage semantic search', () => {
     )
   })
 
+
+
+  it('shows validation error when query is empty', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderWithQueryClient(<TestLabPage />)
+
+    fireEvent.click(screen.getByRole('button', { name: /execute/i }))
+
+    expect(await screen.findByText(/query text is required/i)).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
   it('shows API error message when search request fails', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ code: 'UPSTREAM_ERROR', message: 'service down' }), {
