@@ -69,11 +69,25 @@ type IntentRow = {
 }
 
 function StatusBadge({ status }: Pick<IntentRow, 'status'>) {
-  return status === 'active' ? (
-    <Badge className="uppercase">Active</Badge>
-  ) : (
-    <Badge variant="secondary" className="uppercase">
-      Inactive
+  const isActive = status === 'active'
+  return (
+    <Badge
+      variant={isActive ? 'outline' : 'secondary'}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em]',
+        isActive
+          ? 'border-emerald-300/70 bg-emerald-100/70 text-emerald-900 dark:border-emerald-700/70 dark:bg-emerald-900/35 dark:text-emerald-200'
+          : 'border-border/70 bg-muted/70 text-muted-foreground',
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'size-1.5 rounded-full',
+          isActive ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-muted-foreground/70',
+        )}
+      />
+      {isActive ? 'Active' : 'Inactive'}
     </Badge>
   )
 }
@@ -120,18 +134,21 @@ export function IntentManagementPage() {
       <AppHeader />
 
       <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
-        <section className="flex flex-wrap items-start justify-between gap-5">
+        <section className="flex flex-wrap items-end justify-between gap-5 border-b border-border/70 pb-7">
           <div className="max-w-2xl">
-            <h2 className="text-[clamp(1.6rem,2.4vw,2.15rem)] font-semibold tracking-tight">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">
+              Intent Library
+            </p>
+            <h2 className="mt-1 text-[clamp(1.75rem,2.5vw,2.3rem)] font-semibold tracking-tight">
               Intent Management
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               Add, update, and review the intents your model can route.
               Reindex after changing active intents so new behavior is available.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.04] to-accent/[0.08] p-2 shadow-sm">
             <Button
               variant="outline"
               onClick={() => {
@@ -289,136 +306,171 @@ export function IntentManagementPage() {
           </Alert>
         ) : null}
 
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 px-6 pb-4 pt-5">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-xl">Library Manifest</CardTitle>
-                <Badge variant="outline">{rows.length} total</Badge>
+        <Card className="overflow-hidden border-border/70 bg-gradient-to-b from-accent/[0.08] via-card to-card shadow-[0_14px_36px_-30px_hsl(var(--foreground)/0.55)]">
+          <CardHeader className="border-b border-primary/10 px-6 pb-5 pt-5">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="space-y-1">
+                <CardTitle className="text-[1.15rem] tracking-tight text-foreground/95">
+                  Intent Manifest
+                </CardTitle>
+                <CardDescription className="max-w-xl text-xs uppercase tracking-[0.08em] text-primary/70">
+                  Refined routing inventory for model operations
+                </CardDescription>
               </div>
-              <CardDescription>
-                Active intents remain visually prominent, while inactive intents are
-                de-emphasized for faster scanning.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge>{activeCount} active</Badge>
-              <Badge variant="secondary">{inactiveCount} inactive</Badge>
+              <div className="flex items-center gap-2 text-xs font-medium">
+                <span className="inline-flex items-center rounded-full border border-primary/15 bg-background/90 px-3 py-1 text-foreground/85">
+                  {rows.length} total
+                </span>
+                <span className="inline-flex items-center rounded-full border border-emerald-300/70 bg-emerald-100/70 px-3 py-1 text-emerald-900 dark:border-emerald-700/70 dark:bg-emerald-900/35 dark:text-emerald-200">
+                  {activeCount} active
+                </span>
+                <span className="inline-flex items-center rounded-full border border-accent/35 bg-accent/35 px-3 py-1 text-accent-foreground/75">
+                  {inactiveCount} inactive
+                </span>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm">
-                <TableRow>
-                  <TableHead>Intent Code</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="w-[140px]">Status</TableHead>
-                  <TableHead className="w-[80px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
-                      No intents found. Create a new intent to get started.
-                    </TableCell>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-primary/[0.08] via-primary/[0.03] to-transparent" />
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-transparent hover:bg-transparent">
+                    <TableHead className="sticky top-0 z-10 h-12 px-6 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                      Intent Code
+                    </TableHead>
+                    <TableHead className="sticky top-0 z-10 h-12 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                      Description
+                    </TableHead>
+                    <TableHead className="sticky top-0 z-10 h-12 w-[168px] text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                      Status
+                    </TableHead>
+                    <TableHead className="sticky top-0 z-10 h-12 w-[100px] pr-6 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                      Actions
+                    </TableHead>
                   </TableRow>
-                ) : null}
-                {rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className={cn(
-                      row.status === 'inactive' ? 'bg-muted/15 text-muted-foreground' : '',
-                    )}
-                  >
-                    <TableCell>
-                      <div className="flex max-w-[260px] flex-col gap-1">
-                        <code
-                          className={cn(
-                            'inline-block truncate rounded-lg bg-secondary px-2.5 py-1 text-xs font-semibold text-primary',
-                            row.status === 'inactive' ? 'bg-muted text-muted-foreground' : '',
-                          )}
-                          title={row.code}
-                        >
-                          {row.code}
-                        </code>
-                        <span className="truncate text-xs text-muted-foreground">{row.id}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell
+                </TableHeader>
+                <TableBody>
+                  {rows.length === 0 ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell
+                        colSpan={4}
+                        className="px-6 py-16 text-center text-sm text-muted-foreground"
+                      >
+                        No intents found. Create a new intent to get started.
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                  {rows.map((row, index) => (
+                    <TableRow
+                      key={row.id}
                       className={cn(
-                        'max-w-[540px] text-sm leading-relaxed',
-                        row.status === 'inactive' ? 'text-muted-foreground' : '',
+                        'group border-b border-border/55 bg-transparent transition-all hover:bg-gradient-to-r hover:from-primary/[0.05] hover:to-accent/[0.05]',
+                        index % 2 === 1 ? 'bg-secondary/[0.18]' : '',
+                        row.status === 'inactive' ? 'opacity-85' : '',
                       )}
-                      title={row.description}
                     >
-                      {row.description}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={row.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Open actions for ${row.code}`}
-                          >
-                            <Ellipsis />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onSelect={(event) => {
-                                event.preventDefault()
-                                setEditingIntentId(row.id)
-                                setIntentCode(row.code)
-                                setDescription(row.description)
-                                setFormError(null)
-                                setIsFormOpen(true)
-                              }}
+                      <TableCell className="px-6 py-4">
+                        <div className="flex max-w-[300px] items-start gap-3">
+                          <span
+                            aria-hidden
+                            className={cn(
+                              'mt-2 size-2 rounded-full ring-4 ring-background',
+                              row.status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground/60',
+                            )}
+                          />
+                          <div className="flex min-w-0 flex-col gap-1.5">
+                            <span
+                              className={cn(
+                                'inline-flex max-w-fit items-center rounded-md border px-2.5 py-1 text-[12px] font-semibold tracking-[0.01em] shadow-sm',
+                                row.status === 'inactive'
+                                  ? 'border-accent/35 bg-accent/25 text-accent-foreground/80'
+                                  : 'border-primary/25 bg-primary/[0.12] text-primary/95',
+                              )}
+                              title={row.code}
                             >
-                              <Edit />
-                              Edit intent
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <a href={`/intents/${row.id}/utterances`}>
-                                <MessageSquareText />
-                                Manage utterances
-                              </a>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={(event) => {
-                                event.preventDefault()
-                                if (
-                                  !window.confirm(
-                                    `Delete intent "${row.code}"? This action cannot be undone.`,
-                                  )
-                                ) {
-                                  return
-                                }
-                                void deleteMutation.mutateAsync(row.id)
-                              }}
-                              disabled={deleteMutation.isPending}
-                              className="text-destructive focus:text-destructive"
+                              {row.code}
+                            </span>
+                            <span className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground/85">
+                              Intent #{index + 1} • ID {row.id}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          'max-w-[620px] py-4 text-sm leading-relaxed text-foreground/92',
+                          row.status === 'inactive' ? 'text-muted-foreground' : '',
+                        )}
+                        title={row.description}
+                      >
+                        <span className="block break-words">{row.description}</span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <StatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell className="py-4 pr-6 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Open actions for ${row.code}`}
+                              className="border border-transparent transition-all group-hover:border-border/70 group-hover:bg-card"
                             >
-                              <Trash2 />
-                              Delete intent
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="border-t px-4 py-3 text-xs text-muted-foreground">
-              Showing {rows.length} {rows.length === 1 ? 'intent' : 'intents'} •
-              {' '}
-              {activeCount} active • {inactiveCount} inactive
+                              <Ellipsis />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault()
+                                  setEditingIntentId(row.id)
+                                  setIntentCode(row.code)
+                                  setDescription(row.description)
+                                  setFormError(null)
+                                  setIsFormOpen(true)
+                                }}
+                              >
+                                <Edit />
+                                Edit intent
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={`/intents/${row.id}/utterances`}>
+                                  <MessageSquareText />
+                                  Manage utterances
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault()
+                                  if (
+                                    !window.confirm(
+                                      `Delete intent "${row.code}"? This action cannot be undone.`,
+                                    )
+                                  ) {
+                                    return
+                                  }
+                                  void deleteMutation.mutateAsync(row.id)
+                                }}
+                                disabled={deleteMutation.isPending}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 />
+                                Delete intent
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="border-t border-primary/10 bg-gradient-to-r from-primary/[0.05] via-accent/[0.05] to-primary/[0.03] px-6 py-3 text-xs text-muted-foreground">
+              Showing {rows.length} {rows.length === 1 ? 'intent' : 'intents'} • {activeCount} active • {inactiveCount} inactive
             </div>
           </CardContent>
         </Card>

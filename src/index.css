@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 223 80% 20%;
-    --card: 331 100% 99%;
-    --card-foreground: 223 80% 20%;
-    --popover: 331 100% 99%;
-    --popover-foreground: 223 80% 20%;
+    --background: 0 0% 100%;
+    --foreground: 222 42% 14%;
+    --card: 210 20% 99%;
+    --card-foreground: 222 42% 14%;
+    --popover: 210 20% 99%;
+    --popover-foreground: 222 42% 14%;
     --primary: 222 95% 17%;
-    --primary-foreground: 336 100% 96%;
-    --secondary: 334 100% 90%;
-    --secondary-foreground: 223 74% 22%;
-    --muted: 337 50% 94%;
-    --muted-foreground: 224 30% 38%;
-    --accent: 333 100% 76%;
-    --accent-foreground: 223 80% 20%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 24% 94%;
+    --secondary-foreground: 222 47% 20%;
+    --muted: 220 23% 96%;
+    --muted-foreground: 222 17% 35%;
+    --accent: 214 32% 90%;
+    --accent-foreground: 222 42% 14%;
     --destructive: 356 73% 46%;
-    --destructive-foreground: 335 40% 97%;
-    --border: 335 38% 85%;
-    --input: 335 38% 86%;
-    --ring: 333 100% 76%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 19% 86%;
+    --input: 220 19% 86%;
+    --ring: 221 83% 53%;
     --radius: 0.95rem;
   }
   .dark {
@@ -58,10 +58,7 @@
       -apple-system,
       sans-serif;
     min-height: 100vh;
-    background-image:
-      radial-gradient(circle at 12% -10%, hsl(var(--accent) / 0.2), transparent 38%),
-      radial-gradient(circle at 82% -18%, hsl(var(--primary) / 0.18), transparent 44%),
-      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    background-image: none;
     background-attachment: fixed;
   }
 
