@@ -41,6 +41,14 @@ export type SearchIntentsResponse = {
   items: Array<{ intent_code: string; score: number }>
 }
 
+export type SearchIntentsRerankResponse = {
+  items: Array<{
+    intent_code: string
+    semantic_score: number
+    reranker_score: number
+  }>
+}
+
 export type UtteranceItem = {
   id: string
   intent_id: string
@@ -96,5 +104,44 @@ export type OverviewRecentActivityResponse = {
     input_snippet: string
     predicted_intent: string | null
     confidence: number
+  }>
+}
+
+export type OverviewStageLatencyResponse = {
+  items: Array<{
+    stage_name: string
+    request_count: number
+    error_count: number
+    p50_ms: number
+    p95_ms: number
+    avg_ms: number
+  }>
+}
+
+export type OverviewStageCostResponse = {
+  items: Array<{
+    stage_name: string
+    request_count: number
+    total_estimated_cost_usd: number
+    cost_per_1k_requests: number
+  }>
+}
+
+export type OverviewBenchmarkCompareRange = {
+  baseline_start_at: string
+  baseline_end_at: string
+  candidate_start_at: string
+  candidate_end_at: string
+}
+
+export type OverviewBenchmarkCompareResponse = {
+  items: Array<{
+    stage_name: string
+    baseline_p95_ms: number
+    candidate_p95_ms: number
+    p95_delta_pct: number | null
+    baseline_cost_per_1k_requests: number
+    candidate_cost_per_1k_requests: number
+    cost_per_1k_delta_pct: number | null
   }>
 }

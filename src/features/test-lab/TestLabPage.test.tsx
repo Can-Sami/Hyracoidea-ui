@@ -4,6 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { TestLabPage } from './TestLabPage'
 
+vi.mock('@/components/layout/AppSidebar', () => ({
+  AppSidebar: () => null,
+}))
+
 function renderWithQueryClient(ui: React.ReactNode) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -48,6 +52,8 @@ describe('TestLabPage semantic search', () => {
         method: 'POST',
       }),
     )
+    expect(screen.getByRole('button', { name: /full json response/i })).toBeInTheDocument()
+    expect(screen.queryByDisplayValue(/"items":/i)).not.toBeInTheDocument()
   })
 
 
@@ -126,6 +132,14 @@ describe('TestLabPage semantic search', () => {
     expect(screen.getAllByText('billing_support')).toHaveLength(2)
     expect(screen.getByText(/89% confidence/i)).toBeInTheDocument()
     expect(screen.getByText('intent.wav')).toBeInTheDocument()
+  })
+
+  it('keeps audio result panel hidden before any successful inference', () => {
+    renderWithQueryClient(<TestLabPage />)
+    expect(screen.queryByText(/predicted intent/i)).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /candidate ranking/i }),
+    ).toBeInTheDocument()
   })
 
   it('rejects non-wav uploads before making request', async () => {

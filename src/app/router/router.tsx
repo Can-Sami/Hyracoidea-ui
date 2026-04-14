@@ -1,6 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 
 import { rootRoute } from '../../routes/__root'
+import { analyticsRoute } from '../../routes/analytics'
 import { indexRoute } from '../../routes/index'
 import { intentsRoute } from '../../routes/intents'
 import { intentsUtterancesRoute } from '../../routes/intents-utterances'
@@ -8,6 +9,7 @@ import { testLabRoute } from '../../routes/test-lab'
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  analyticsRoute,
   intentsRoute,
   intentsUtterancesRoute,
   testLabRoute,

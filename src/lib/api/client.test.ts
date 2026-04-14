@@ -5,6 +5,8 @@ import { del, get, post, put } from './client'
 describe('api client', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+    vi.resetModules()
   })
 
   it('throws an Error subtype while preserving normalized fields', async () => {
@@ -120,5 +122,24 @@ describe('api client', () => {
         method: 'DELETE',
       }),
     )
+  })
+
+  it('injects x-api-key header when VITE_API_KEY is configured', async () => {
+    vi.stubEnv('VITE_API_KEY', 'local-dev-key')
+    const { get: getWithApiKey } = await import('./client')
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ status: 'ok' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getWithApiKey('/api/healthz')
+
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit
+    const headers = new Headers(options?.headers)
+    expect(headers.get('x-api-key')).toBe('local-dev-key')
   })
 })

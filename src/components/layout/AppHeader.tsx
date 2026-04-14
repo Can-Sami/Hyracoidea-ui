@@ -1,7 +1,8 @@
-import { Activity, Bell, ChevronDown, Search, UserCircle2 } from "lucide-react";
+import { Activity, Bell, ChevronDown, Command, Search, UserCircle2 } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,49 +11,58 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 
 export function AppHeader() {
   return (
-    <header className="fixed left-64 right-0 top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
-      <div className="flex h-16 w-full items-center gap-4 px-6 lg:gap-6 lg:px-10">
-        <div className="flex min-w-0 flex-1 items-center gap-4 lg:gap-6">
-          <div className="relative w-full max-w-xl">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    <header className="fixed left-64 right-0 top-0 z-40 border-b border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-bg))] backdrop-blur-md">
+      <div className="flex h-16 w-full items-center gap-4 px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="relative w-full max-w-lg">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[hsl(var(--claude-muted))]" />
             <Input
               aria-label="Search dashboard"
-              className="h-9 pl-10"
-              placeholder="Search parameters, intents, or logs..."
+              className="h-9 rounded-lg border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] pl-10 text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
+              placeholder="Search docs, intents, logs..."
             />
           </div>
-          <nav className="hidden items-center gap-5 text-sm text-muted-foreground xl:flex">
-            <a href="#" className="hover:text-foreground">
-              Docs
-            </a>
-            <a href="#" className="hover:text-foreground">
-              API Status
-            </a>
-          </nav>
+          <Badge
+            variant="outline"
+            className="hidden items-center gap-1 rounded-md border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] px-2 py-1 text-[11px] font-medium text-[hsl(var(--claude-muted))] lg:inline-flex"
+          >
+            <Command />
+            K
+          </Badge>
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          <Button variant="ghost" size="icon" aria-label="Notifications">
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Notifications"
+            className="text-[hsl(var(--claude-text))] hover:bg-transparent hover:text-[hsl(var(--claude-accent))]"
+          >
             <Bell />
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Hub activity">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Hub activity"
+            className="text-[hsl(var(--claude-text))] hover:bg-transparent hover:text-[hsl(var(--claude-accent))]"
+          >
             <Activity />
           </Button>
-          <Separator orientation="vertical" className="mx-2 h-5" />
+          <Separator orientation="vertical" className="mx-1 h-5" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 gap-2 px-2">
-                <Avatar className="size-7">
-                  <AvatarImage src="/avatars/operator.png" alt="Casey Taylor" />
+              <Button variant="outline" className="h-9 gap-2 rounded-lg border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] px-2.5 text-[hsl(var(--claude-text))] hover:bg-[hsl(var(--claude-surface-elevated))]">
+                <Avatar className="size-6">
+                  <AvatarImage src="/avatars/operator.png" alt="Can Tam" />
                   <AvatarFallback>CT</AvatarFallback>
                 </Avatar>
-                <span className="text-sm">Casey</span>
+                <span className="text-sm font-medium">Can</span>
                 <ChevronDown data-icon="inline-end" />
               </Button>
             </DropdownMenuTrigger>
@@ -81,5 +91,5 @@ export function AppHeader() {
         </div>
       </div>
     </header>
-  );
+  )
 }

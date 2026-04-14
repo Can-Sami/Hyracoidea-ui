@@ -4,6 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { OverviewDashboardPage } from './OverviewDashboardPage'
 
+vi.mock('@/components/layout/AppSidebar', () => ({
+  AppSidebar: () => null,
+}))
+
 function renderWithQueryClient(ui: React.ReactNode) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },

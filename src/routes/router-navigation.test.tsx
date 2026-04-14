@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router'
 
 import { indexRoute } from './index'
+import { analyticsRoute } from './analytics'
 import { intentsRoute } from './intents'
 import { intentsUtterancesRoute } from './intents-utterances'
 import { testLabRoute } from './test-lab'
@@ -70,7 +71,7 @@ describe('router navigation', () => {
     expect(
       await screen.findByRole('heading', { name: /intent management/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/library manifest/i)).toBeInTheDocument()
+    expect(screen.getByText(/intent manifest/i)).toBeInTheDocument()
   })
 
   it('renders test lab page at /test-lab', async () => {
@@ -86,6 +87,20 @@ describe('router navigation', () => {
     ).toBeInTheDocument()
     expect(screen.getByText(/semantic search/i)).toBeInTheDocument()
     expect(screen.getByText(/audio inference/i)).toBeInTheDocument()
+  })
+
+  it('renders analytics page at /analytics', async () => {
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([indexRoute, analyticsRoute]),
+      history: createMemoryHistory({ initialEntries: ['/analytics'] }),
+    })
+
+    renderWithProviders(<RouterProvider router={router} />)
+
+    expect(await screen.findByRole('heading', { name: /stage analytics/i })).toBeInTheDocument()
+    expect(
+      screen.getByText(/benchmark comparison \(candidate vs baseline\)/i),
+    ).toBeInTheDocument()
   })
 
   it('renders utterance management page at /intents/:id/utterances', async () => {

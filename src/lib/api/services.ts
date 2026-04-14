@@ -1,17 +1,22 @@
 import * as client from './client'
-import { apiUrl } from './config'
+import { apiKey, apiUrl } from './config'
 import type {
   HealthResponse,
   InferenceIntentResponse,
   ListUtterancesResponse,
   ListIntentsResponse,
   OverviewIntentDistributionResponse,
+  OverviewBenchmarkCompareRange,
+  OverviewBenchmarkCompareResponse,
   OverviewRecentActivityResponse,
+  OverviewStageCostResponse,
+  OverviewStageLatencyResponse,
   OverviewSummaryResponse,
   OverviewTimeRange,
   ReadyzResponse,
   ReindexResponse,
   SearchIntentsRequest,
+  SearchIntentsRerankResponse,
   SearchIntentsResponse,
   IntentItem,
   UpsertIntentRequest,
@@ -56,6 +61,33 @@ export function getOverviewIntentDistribution(range: OverviewTimeRange) {
 export function getOverviewRecentActivity(range: OverviewTimeRange, limit = 10) {
   return client.get<OverviewRecentActivityResponse>(
     apiUrl(`/api/v1/overview/recent-activity?${toOverviewQuery(range, limit)}`),
+  )
+}
+
+export function getOverviewStageLatency(range: OverviewTimeRange) {
+  return client.get<OverviewStageLatencyResponse>(
+    apiUrl(`/api/v1/overview/stage-latency?${toOverviewQuery(range)}`),
+  )
+}
+
+export function getOverviewStageCost(range: OverviewTimeRange) {
+  return client.get<OverviewStageCostResponse>(
+    apiUrl(`/api/v1/overview/stage-cost?${toOverviewQuery(range)}`),
+  )
+}
+
+function toOverviewBenchmarkCompareQuery(range: OverviewBenchmarkCompareRange) {
+  return new URLSearchParams({
+    baseline_start_at: range.baseline_start_at,
+    baseline_end_at: range.baseline_end_at,
+    candidate_start_at: range.candidate_start_at,
+    candidate_end_at: range.candidate_end_at,
+  }).toString()
+}
+
+export function getOverviewBenchmarkCompare(range: OverviewBenchmarkCompareRange) {
+  return client.get<OverviewBenchmarkCompareResponse>(
+    apiUrl(`/api/v1/overview/benchmark-compare?${toOverviewBenchmarkCompareQuery(range)}`),
   )
 }
 
@@ -127,11 +159,24 @@ export function searchIntents(body: SearchIntentsRequest) {
   )
 }
 
+export function searchIntentsRerank(body: SearchIntentsRequest) {
+  return client.post<SearchIntentsRerankResponse, SearchIntentsRequest>(
+    apiUrl('/api/v1/intents/search/rerank'),
+    body,
+  )
+}
+
 export async function inferIntentFromAudio(
   formData: FormData,
 ): Promise<InferenceIntentResponse> {
+  const headers = new Headers()
+  if (apiKey.length > 0) {
+    headers.set('x-api-key', apiKey)
+  }
+
   const response = await fetch(apiUrl('/api/v1/inference/intent'), {
     method: 'POST',
+    headers,
     body: formData,
   })
 

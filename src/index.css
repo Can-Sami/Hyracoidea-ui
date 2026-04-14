@@ -24,6 +24,22 @@
     --input: 220 19% 86%;
     --ring: 221 83% 53%;
     --radius: 0.95rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --claude-bg: 22 10% 8%;
+    --claude-surface: 22 10% 11%;
+    --claude-surface-elevated: 20 10% 14%;
+    --claude-border: 24 8% 22%;
+    --claude-text: 36 26% 92%;
+    --claude-muted: 30 10% 66%;
+    --claude-accent: 18 56% 55%;
+    --claude-accent-soft: 18 50% 20%;
   }
   .dark {
     --background: 223 68% 10%;
@@ -45,6 +61,22 @@
     --border: 223 36% 26%;
     --input: 223 36% 26%;
     --ring: 333 100% 76%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --claude-bg: 22 10% 8%;
+    --claude-surface: 22 10% 11%;
+    --claude-surface-elevated: 20 10% 14%;
+    --claude-border: 24 8% 22%;
+    --claude-text: 36 26% 92%;
+    --claude-muted: 30 10% 66%;
+    --claude-accent: 18 56% 55%;
+    --claude-accent-soft: 18 50% 20%;
   }
   * {
     @apply border-border outline-ring/50;

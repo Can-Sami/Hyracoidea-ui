@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import {
   Edit,
   Ellipsis,
@@ -74,19 +75,12 @@ function StatusBadge({ status }: Pick<IntentRow, 'status'>) {
     <Badge
       variant={isActive ? 'outline' : 'secondary'}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em]',
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em]',
         isActive
-          ? 'border-emerald-300/70 bg-emerald-100/70 text-emerald-900 dark:border-emerald-700/70 dark:bg-emerald-900/35 dark:text-emerald-200'
-          : 'border-border/70 bg-muted/70 text-muted-foreground',
+          ? 'border-[hsl(var(--claude-accent)/0.55)] bg-[hsl(var(--claude-accent-soft))] text-[hsl(var(--claude-text))]'
+          : 'border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-muted))]',
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          'size-1.5 rounded-full',
-          isActive ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-muted-foreground/70',
-        )}
-      />
       {isActive ? 'Active' : 'Inactive'}
     </Badge>
   )
@@ -133,22 +127,22 @@ export function IntentManagementPage() {
 
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
-        <section className="flex flex-wrap items-end justify-between gap-5 border-b border-border/70 pb-7">
+      <main className="ml-64 flex flex-col gap-8 bg-[hsl(var(--claude-bg))] px-6 pb-12 pt-24 lg:px-8">
+        <section className="flex flex-wrap items-end justify-between gap-5">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--claude-muted))]">
               Intent Library
             </p>
-            <h2 className="mt-1 text-[clamp(1.75rem,2.5vw,2.3rem)] font-semibold tracking-tight">
+            <h2 className="mt-1 text-[clamp(1.75rem,2.5vw,2.3rem)] font-semibold tracking-tight text-[hsl(var(--claude-text))]">
               Intent Management
             </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[hsl(var(--claude-muted))]">
               Add, update, and review the intents your model can route.
               Reindex after changing active intents so new behavior is available.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.04] to-accent/[0.08] p-2 shadow-sm">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -174,10 +168,10 @@ export function IntentManagementPage() {
             }
           }}
         >
-          <DialogContent className="max-w-xl rounded-2xl border-border/70 bg-card p-0 shadow-[0_14px_44px_-28px_hsl(var(--foreground)/0.45)]">
-            <DialogHeader className="gap-2 border-b border-border/60 px-6 pb-5 pt-6 text-left">
+          <DialogContent className="max-w-xl border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] p-0 text-[hsl(var(--claude-text))]">
+            <DialogHeader className="gap-2 border-b border-[hsl(var(--claude-border))] px-6 pb-5 pt-6 text-left">
               <DialogTitle>{editingIntentId ? 'Edit Intent' : 'Create Intent'}</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-[hsl(var(--claude-muted))]">
                 Define the routing key and a clear description so operators can scan the
                 library quickly.
               </DialogDescription>
@@ -230,7 +224,7 @@ export function IntentManagementPage() {
               </FieldGroup>
             </div>
 
-            <DialogFooter className="gap-2 border-t border-border/60 px-6 pb-6 pt-4 sm:justify-end">
+            <DialogFooter className="gap-2 border-t border-[hsl(var(--claude-border))] px-6 pb-6 pt-4 sm:justify-end">
               <Button variant="outline" onClick={closeForm} disabled={isSubmitting}>
                 Cancel
               </Button>
@@ -306,46 +300,48 @@ export function IntentManagementPage() {
           </Alert>
         ) : null}
 
-        <Card className="overflow-hidden border-border/70 bg-gradient-to-b from-accent/[0.08] via-card to-card shadow-[0_14px_36px_-30px_hsl(var(--foreground)/0.55)]">
-          <CardHeader className="border-b border-primary/10 px-6 pb-5 pt-5">
+        <Card className="overflow-hidden border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))]">
+          <CardHeader className="border-b border-[hsl(var(--claude-border))] px-6 pb-5 pt-5">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="space-y-1">
-                <CardTitle className="text-[1.15rem] tracking-tight text-foreground/95">
+                <CardTitle className="text-[1.15rem] tracking-tight text-[hsl(var(--claude-text))]">
                   Intent Manifest
                 </CardTitle>
-                <CardDescription className="max-w-xl text-xs uppercase tracking-[0.08em] text-primary/70">
+                <CardDescription className="max-w-xl text-xs uppercase tracking-[0.08em] text-[hsl(var(--claude-muted))]">
                   Refined routing inventory for model operations
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 text-xs font-medium">
-                <span className="inline-flex items-center rounded-full border border-primary/15 bg-background/90 px-3 py-1 text-foreground/85">
+                <span className="inline-flex items-center rounded-full border border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] px-3 py-1 text-[hsl(var(--claude-text))]">
                   {rows.length} total
                 </span>
-                <span className="inline-flex items-center rounded-full border border-emerald-300/70 bg-emerald-100/70 px-3 py-1 text-emerald-900 dark:border-emerald-700/70 dark:bg-emerald-900/35 dark:text-emerald-200">
+                <span className="inline-flex items-center rounded-full border border-[hsl(var(--claude-accent)/0.5)] bg-[hsl(var(--claude-accent-soft))] px-3 py-1 text-[hsl(var(--claude-text))]">
                   {activeCount} active
                 </span>
-                <span className="inline-flex items-center rounded-full border border-accent/35 bg-accent/35 px-3 py-1 text-accent-foreground/75">
+                <span className="inline-flex items-center rounded-full border border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] px-3 py-1 text-[hsl(var(--claude-muted))]">
                   {inactiveCount} inactive
                 </span>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-primary/[0.08] via-primary/[0.03] to-transparent" />
-              <Table>
+            <div className="relative bg-[hsl(var(--claude-surface))]">
+              <Table
+                className="bg-[hsl(var(--claude-surface))]"
+                containerClassName="border-[hsl(var(--claude-accent-soft))] bg-[hsl(var(--claude-accent-soft))]"
+              >
                 <TableHeader>
-                  <TableRow className="bg-transparent hover:bg-transparent">
-                    <TableHead className="sticky top-0 z-10 h-12 px-6 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                  <TableRow className="cursor-default bg-[hsl(var(--claude-accent-soft))] hover:!bg-[hsl(var(--claude-accent-soft))] transition-none">
+                    <TableHead className="h-12 px-6 text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--claude-text))]">
                       Intent Code
                     </TableHead>
-                    <TableHead className="sticky top-0 z-10 h-12 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                    <TableHead className="h-12 text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--claude-text))]">
                       Description
                     </TableHead>
-                    <TableHead className="sticky top-0 z-10 h-12 w-[168px] text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                    <TableHead className="h-12 w-[168px] text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--claude-text))]">
                       Status
                     </TableHead>
-                    <TableHead className="sticky top-0 z-10 h-12 w-[100px] pr-6 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75 backdrop-blur supports-[backdrop-filter]:bg-card/88">
+                    <TableHead className="h-12 w-[100px] pr-6 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--claude-text))]">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -355,7 +351,7 @@ export function IntentManagementPage() {
                     <TableRow className="hover:bg-transparent">
                       <TableCell
                         colSpan={4}
-                        className="px-6 py-16 text-center text-sm text-muted-foreground"
+                        className="px-6 py-16 text-center text-sm text-[hsl(var(--claude-muted))]"
                       >
                         No intents found. Create a new intent to get started.
                       </TableCell>
@@ -365,42 +361,33 @@ export function IntentManagementPage() {
                     <TableRow
                       key={row.id}
                       className={cn(
-                        'group border-b border-border/55 bg-transparent transition-all hover:bg-gradient-to-r hover:from-primary/[0.05] hover:to-accent/[0.05]',
-                        index % 2 === 1 ? 'bg-secondary/[0.18]' : '',
+                        'group border-b border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] transition-colors hover:bg-[hsl(var(--claude-surface-elevated))]',
+                        index % 2 === 1 ? 'bg-[hsl(var(--claude-surface-elevated))]' : '',
                         row.status === 'inactive' ? 'opacity-85' : '',
                       )}
                     >
                       <TableCell className="px-6 py-4">
-                        <div className="flex max-w-[300px] items-start gap-3">
+                        <div className="flex min-w-0 flex-col gap-1.5">
                           <span
-                            aria-hidden
                             className={cn(
-                              'mt-2 size-2 rounded-full ring-4 ring-background',
-                              row.status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground/60',
+                              'inline-flex max-w-fit items-center rounded-md border px-2.5 py-1 text-[12px] font-semibold tracking-[0.01em]',
+                              row.status === 'inactive'
+                                ? 'border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-muted))]'
+                                : 'border-[hsl(var(--claude-accent)/0.45)] bg-[hsl(var(--claude-accent-soft))] text-[hsl(var(--claude-text))]',
                             )}
-                          />
-                          <div className="flex min-w-0 flex-col gap-1.5">
-                            <span
-                              className={cn(
-                                'inline-flex max-w-fit items-center rounded-md border px-2.5 py-1 text-[12px] font-semibold tracking-[0.01em] shadow-sm',
-                                row.status === 'inactive'
-                                  ? 'border-accent/35 bg-accent/25 text-accent-foreground/80'
-                                  : 'border-primary/25 bg-primary/[0.12] text-primary/95',
-                              )}
-                              title={row.code}
-                            >
-                              {row.code}
-                            </span>
-                            <span className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground/85">
-                              Intent #{index + 1} • ID {row.id}
-                            </span>
-                          </div>
+                            title={row.code}
+                          >
+                            {row.code}
+                          </span>
+                          <span className="truncate text-[10px] uppercase tracking-[0.12em] text-[hsl(var(--claude-muted))]">
+                            Intent #{index + 1} • ID {row.id}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell
                         className={cn(
-                          'max-w-[620px] py-4 text-sm leading-relaxed text-foreground/92',
-                          row.status === 'inactive' ? 'text-muted-foreground' : '',
+                          'max-w-[620px] py-4 text-sm leading-relaxed text-[hsl(var(--claude-text))]',
+                          row.status === 'inactive' ? 'text-[hsl(var(--claude-muted))]' : '',
                         )}
                         title={row.description}
                       >
@@ -416,7 +403,7 @@ export function IntentManagementPage() {
                               variant="ghost"
                               size="icon-sm"
                               aria-label={`Open actions for ${row.code}`}
-                              className="border border-transparent transition-all group-hover:border-border/70 group-hover:bg-card"
+                              className="border border-transparent text-[hsl(var(--claude-text))] transition-colors group-hover:border-[hsl(var(--claude-border))] group-hover:bg-[hsl(var(--claude-surface-elevated))]"
                             >
                               <Ellipsis />
                             </Button>
@@ -437,10 +424,13 @@ export function IntentManagementPage() {
                                 Edit intent
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <a href={`/intents/${row.id}/utterances`}>
+                                <Link
+                                  to="/intents/$intentId/utterances"
+                                  params={{ intentId: row.id }}
+                                >
                                   <MessageSquareText />
                                   Manage utterances
-                                </a>
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={(event) => {
@@ -469,7 +459,7 @@ export function IntentManagementPage() {
                 </TableBody>
               </Table>
             </div>
-            <div className="border-t border-primary/10 bg-gradient-to-r from-primary/[0.05] via-accent/[0.05] to-primary/[0.03] px-6 py-3 text-xs text-muted-foreground">
+            <div className="border-t border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] px-6 py-3 text-xs text-[hsl(var(--claude-muted))]">
               Showing {rows.length} {rows.length === 1 ? 'intent' : 'intents'} • {activeCount} active • {inactiveCount} inactive
             </div>
           </CardContent>
