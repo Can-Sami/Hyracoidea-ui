@@ -7,7 +7,10 @@ import {
   deleteUtterance,
   getHealth,
   getOverviewIntentDistribution,
+  getOverviewBenchmarkCompare,
   getOverviewRecentActivity,
+  getOverviewStageCost,
+  getOverviewStageLatency,
   getOverviewSummary,
   getReadyz,
   inferIntentFromAudio,
@@ -15,11 +18,13 @@ import {
   listUtterances,
   reindexIntents,
   searchIntents,
+  searchIntentsRerank,
   updateIntent,
   updateUtterance,
 } from './services'
 import type {
   OverviewTimeRange,
+  OverviewBenchmarkCompareRange,
   SearchIntentsRequest,
   UpsertIntentRequest,
   UpsertUtteranceRequest,
@@ -33,6 +38,11 @@ const queryKeys = {
     ['overview', 'intent-distribution', range] as const,
   overviewRecentActivity: (range: OverviewTimeRange, limit: number) =>
     ['overview', 'recent-activity', range, limit] as const,
+  overviewStageLatency: (range: OverviewTimeRange) =>
+    ['overview', 'stage-latency', range] as const,
+  overviewStageCost: (range: OverviewTimeRange) => ['overview', 'stage-cost', range] as const,
+  overviewBenchmarkCompare: (range: OverviewBenchmarkCompareRange) =>
+    ['overview', 'benchmark-compare', range] as const,
   intents: ['intents'] as const,
   utterances: (intentId: string) => ['utterances', intentId] as const,
 }
@@ -69,6 +79,27 @@ export function useOverviewRecentActivityQuery(range: OverviewTimeRange, limit =
   return useQuery({
     queryKey: queryKeys.overviewRecentActivity(range, limit),
     queryFn: () => getOverviewRecentActivity(range, limit),
+  })
+}
+
+export function useOverviewStageLatencyQuery(range: OverviewTimeRange) {
+  return useQuery({
+    queryKey: queryKeys.overviewStageLatency(range),
+    queryFn: () => getOverviewStageLatency(range),
+  })
+}
+
+export function useOverviewStageCostQuery(range: OverviewTimeRange) {
+  return useQuery({
+    queryKey: queryKeys.overviewStageCost(range),
+    queryFn: () => getOverviewStageCost(range),
+  })
+}
+
+export function useOverviewBenchmarkCompareQuery(range: OverviewBenchmarkCompareRange) {
+  return useQuery({
+    queryKey: queryKeys.overviewBenchmarkCompare(range),
+    queryFn: () => getOverviewBenchmarkCompare(range),
   })
 }
 
@@ -168,6 +199,12 @@ export function useDeleteUtteranceMutation(intentId: string) {
 export function useSearchIntentsMutation() {
   return useMutation({
     mutationFn: (body: SearchIntentsRequest) => searchIntents(body),
+  })
+}
+
+export function useSearchIntentsRerankMutation() {
+  return useMutation({
+    mutationFn: (body: SearchIntentsRequest) => searchIntentsRerank(body),
   })
 }
 

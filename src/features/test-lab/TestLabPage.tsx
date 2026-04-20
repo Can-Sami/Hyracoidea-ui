@@ -1,4 +1,6 @@
 import {
+  ChevronDown,
+  ChevronUp,
   Copy,
   LoaderCircle,
   Upload,
@@ -23,7 +25,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
@@ -48,6 +49,7 @@ export function TestLabPage() {
   const [queryError, setQueryError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [fullResponse, setFullResponse] = useState<SearchResponse | null>(null)
+  const [isFullResponseOpen, setIsFullResponseOpen] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
   const [lastUploadedFileName, setLastUploadedFileName] = useState<string | null>(null)
   const [inferenceResponse, setInferenceResponse] =
@@ -77,6 +79,7 @@ export function TestLabPage() {
       const response = await searchMutation.mutateAsync(body)
 
       setFullResponse(response)
+      setIsFullResponseOpen(false)
       setSearchResults(
         response.items.map((item) => ({
           intent_code: item.intent_code,
@@ -86,6 +89,7 @@ export function TestLabPage() {
     } catch {
       setSearchResults([])
       setFullResponse(null)
+      setIsFullResponseOpen(false)
     }
   }
 
@@ -130,37 +134,46 @@ export function TestLabPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--claude-bg))]">
       <AppSidebar activePage="test-lab" />
 
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
+      <main className="ml-64 flex flex-col gap-8 bg-[hsl(var(--claude-bg))] px-6 pb-12 pt-24 lg:px-8">
         <header>
-          <h2 className="text-[clamp(1.75rem,2.7vw,2.4rem)] font-semibold tracking-tight">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--claude-muted))]">
+            Platform
+          </p>
+          <h2 className="text-[clamp(1.75rem,2.7vw,2.4rem)] font-semibold tracking-tight text-[hsl(var(--claude-text))]">
             Test &amp; Inference Lab
           </h2>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mt-2 text-[hsl(var(--claude-muted))]">
             Validate text search and audio intent inference before promoting model changes.
           </p>
         </header>
 
         <section className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))]">
             <CardHeader className="flex flex-row items-center justify-between gap-3">
-              <CardTitle className="text-xl">Semantic Search</CardTitle>
-              <Badge variant="outline">/api/v1/intents/search</Badge>
+              <CardTitle className="text-xl text-[hsl(var(--claude-text))]">Semantic Search</CardTitle>
+              <Badge
+                variant="outline"
+                className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-muted))]"
+              >
+                /api/v1/intents/search
+              </Badge>
             </CardHeader>
 
             <CardContent className="flex flex-col gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--claude-muted))]">
                   Search query
                 </label>
                 <div className="flex flex-wrap gap-3">
                   <Input
                     aria-label="Query Text"
                     placeholder="e.g. I want to cancel my subscription"
+                    className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))] selection:bg-[hsl(var(--claude-accent))] selection:text-[hsl(var(--claude-text))]"
                     value={query}
                     maxLength={300}
                     onChange={(event) => {
@@ -168,21 +181,25 @@ export function TestLabPage() {
                       if (queryError) setQueryError(null)
                     }}
                   />
-                  <Button className="min-w-28" onClick={onSearchSubmit} disabled={!canExecute}>
+                  <Button
+                    className="min-w-28 bg-[hsl(var(--claude-accent))] text-[hsl(var(--claude-text))] hover:bg-[hsl(var(--claude-accent)/0.92)]"
+                    onClick={onSearchSubmit}
+                    disabled={!canExecute}
+                  >
                     {isSearching ? 'Running...' : 'Execute'}
                   </Button>
                 </div>
                 {queryError ? (
                   <p className="text-sm text-destructive">{queryError}</p>
                 ) : (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[hsl(var(--claude-muted))]">
                     Up to 300 characters. You can use emoji and multilingual text.
                   </p>
                 )}
               </div>
 
               <div className="flex flex-col gap-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--claude-muted))]">
                   Results
                 </h3>
                 {searchError ? (
@@ -201,22 +218,22 @@ export function TestLabPage() {
                   </Alert>
                 ) : null}
                 {searchResults.length === 0 && !searchError ? (
-                  <p className="text-sm text-muted-foreground">Run a query to see top intent matches.</p>
+                  <p className="text-sm text-[hsl(var(--claude-muted))]">Run a query to see top intent matches.</p>
                 ) : null}
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0 rounded-lg border border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))]">
                   {searchResults.map((result) => (
-                  <div
-                    key={result.intent_code}
-                    className="flex items-center justify-between border-b border-border/70 py-2.5 text-sm"
-                  >
-                    <span
-                      className="max-w-[70%] truncate font-medium"
-                      title={result.intent_code}
+                    <div
+                      key={result.intent_code}
+                      className="flex items-center justify-between border-b border-[hsl(var(--claude-border))] px-3 py-2.5 text-sm last:border-b-0"
                     >
-                      {result.intent_code}
-                    </span>
-                    <span className="font-semibold text-muted-foreground">{result.score}</span>
-                  </div>
+                      <span
+                        className="max-w-[70%] truncate font-medium text-[hsl(var(--claude-text))]"
+                        title={result.intent_code}
+                      >
+                        {result.intent_code}
+                      </span>
+                      <span className="font-semibold text-[hsl(var(--claude-muted))]">{result.score}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -224,12 +241,25 @@ export function TestLabPage() {
               {fullResponse ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[hsl(var(--claude-muted))] hover:text-[hsl(var(--claude-text))]"
+                      onClick={() => {
+                        setIsFullResponseOpen((open) => !open)
+                      }}
+                      aria-expanded={isFullResponseOpen}
+                    >
                       Full JSON Response
-                    </h3>
+                      {isFullResponseOpen ? (
+                        <ChevronUp data-icon="inline-end" />
+                      ) : (
+                        <ChevronDown data-icon="inline-end" />
+                      )}
+                    </button>
                     <Button
                       size="sm"
                       variant="outline"
+                      className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] hover:bg-[hsl(var(--claude-accent-soft))]"
                       onClick={() => {
                         navigator.clipboard.writeText(
                           JSON.stringify(fullResponse, null, 2),
@@ -240,20 +270,27 @@ export function TestLabPage() {
                       Copy JSON
                     </Button>
                   </div>
-                  <Textarea
-                    readOnly
-                    value={JSON.stringify(fullResponse, null, 2)}
-                    className="min-h-[200px] font-mono text-xs"
-                  />
+                  {isFullResponseOpen ? (
+                    <Textarea
+                      readOnly
+                      value={JSON.stringify(fullResponse, null, 2)}
+                      className="min-h-[200px] border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] font-mono text-xs text-[hsl(var(--claude-text))]"
+                    />
+                  ) : null}
                 </div>
               ) : null}
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))]">
             <CardHeader className="flex flex-row items-center justify-between gap-3">
-              <CardTitle className="text-xl">Audio Inference</CardTitle>
-              <Badge variant="outline">/api/v1/inference/intent</Badge>
+              <CardTitle className="text-xl text-[hsl(var(--claude-text))]">Audio Inference</CardTitle>
+              <Badge
+                variant="outline"
+                className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-muted))]"
+              >
+                /api/v1/inference/intent
+              </Badge>
             </CardHeader>
 
             <CardContent className="flex flex-col gap-6">
@@ -273,7 +310,7 @@ export function TestLabPage() {
                   />
                   <div
                     className={cn(
-                      'flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-background p-3',
+                      'flex flex-wrap items-center gap-3 rounded-lg border border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] p-3',
                       audioError && 'border-destructive/40',
                     )}
                   >
@@ -281,6 +318,7 @@ export function TestLabPage() {
                       type="button"
                       variant="outline"
                       size="sm"
+                      className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] text-[hsl(var(--claude-text))] hover:bg-[hsl(var(--claude-accent-soft))]"
                       onClick={() => {
                         audioInputRef.current?.click()
                       }}
@@ -289,7 +327,7 @@ export function TestLabPage() {
                       <Upload data-icon="inline-start" />
                       Choose WAV
                     </Button>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-[hsl(var(--claude-text)/0.78)]">
                       {lastUploadedFileName ?? 'No file selected yet.'}
                     </p>
                   </div>
@@ -298,7 +336,7 @@ export function TestLabPage() {
 
               {audioMutation.isPending ? (
                 <Alert className="flex items-center gap-2 px-3 py-2">
-                  <LoaderCircle className="animate-spin text-muted-foreground" />
+                  <LoaderCircle className="animate-spin text-[hsl(var(--claude-muted))]" />
                   Analyzing audio inference...
                 </Alert>
               ) : null}
@@ -312,49 +350,54 @@ export function TestLabPage() {
                   {audioError}
                 </Alert>
               ) : null}
-              <Progress
-                value={audioMutation.isPending ? 66 : inferenceResponse ? 100 : 0}
+              <div
+                className="h-2 w-full rounded-full bg-[hsl(var(--claude-surface-elevated))]"
                 aria-label="Audio inference progress"
-              />
-
-              <div className="rounded-lg border border-border/70 bg-muted/30 p-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Predicted Intent
-                </p>
-                <p className="mt-2 text-xl font-semibold">
-                  {inferenceResponse?.intent_code ?? 'No result yet'}
-                </p>
-                <p
-                  className="mt-1 break-words text-xs text-muted-foreground"
-                  dir="auto"
-                >
-                  {inferenceResponse?.transcript
-                    ? `"${inferenceResponse.transcript}"`
-                    : 'Upload a WAV file to see transcript.'}
-                </p>
-                <p className="mt-3 text-sm font-semibold">
-                  {inferenceResponse
-                    ? `${Math.round(inferenceResponse.confidence * 100)}% confidence`
-                    : 'Inference confidence will appear here'}
-                </p>
+              >
+                <div
+                  className="h-2 rounded-full bg-[hsl(var(--claude-accent))]"
+                  style={{
+                    width: `${audioMutation.isPending ? 66 : inferenceResponse ? 100 : 0}%`,
+                  }}
+                />
               </div>
 
+              {inferenceResponse ? (
+                <div className="rounded-lg border border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] p-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--claude-muted))]">
+                    Predicted Intent
+                  </p>
+                  <p className="mt-2 text-xl font-semibold text-[hsl(var(--claude-text))]">
+                    {inferenceResponse.intent_code}
+                  </p>
+                  <p
+                    className="mt-1 break-words text-xs text-[hsl(var(--claude-muted))]"
+                    dir="auto"
+                  >
+                    {`"${inferenceResponse.transcript}"`}
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-[hsl(var(--claude-text))]">
+                    {`${Math.round(inferenceResponse.confidence * 100)}% confidence`}
+                  </p>
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--claude-muted))]">
                   Candidate Ranking
                 </h3>
                 {inferenceResponse ? (
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-0 rounded-lg border border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))]">
                     {inferenceResponse.top_candidates.map((candidate) => (
-                    <div
-                      key={candidate.intent_code}
-                      className="flex items-center justify-between border-b border-border/70 py-2.5 text-xs"
-                    >
-                      <span>{candidate.intent_code}</span>
-                      <span className="font-bold text-muted-foreground">
-                        {candidate.score.toFixed(3)}
-                      </span>
-                    </div>
+                      <div
+                        key={candidate.intent_code}
+                        className="flex items-center justify-between border-b border-[hsl(var(--claude-border))] px-3 py-2.5 text-xs last:border-b-0"
+                      >
+                        <span className="text-[hsl(var(--claude-text))]">{candidate.intent_code}</span>
+                        <span className="font-bold text-[hsl(var(--claude-muted))]">
+                          {candidate.score.toFixed(3)}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 ) : (
