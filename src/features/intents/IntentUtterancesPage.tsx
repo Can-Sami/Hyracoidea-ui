@@ -33,17 +33,17 @@ export function IntentUtterancesPage() {
   const items = utterancesQuery.data?.items ?? []
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--claude-bg))] text-[hsl(var(--claude-text))]">
       <AppSidebar activePage="intents" />
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-10 px-6 pb-12 pt-24 lg:px-10">
+      <main className="ml-64 flex min-h-screen flex-col gap-10 bg-[hsl(var(--claude-bg))] px-6 pb-12 pt-24 lg:px-10">
         <section className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <h2 className="text-[clamp(1.6rem,2.4vw,2.15rem)] font-semibold tracking-tight">
+            <h2 className="text-[clamp(1.6rem,2.4vw,2.15rem)] font-semibold tracking-tight text-[hsl(var(--claude-text))]">
               Utterance Management
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-[hsl(var(--claude-muted))]">
               Add and edit training phrases for intent <code>{intentId}</code>.
             </p>
           </div>
@@ -67,9 +67,9 @@ export function IntentUtterancesPage() {
           </Alert>
         ) : null}
 
-        <Card className="max-w-4xl border-border/70 shadow-sm">
+        <Card className="max-w-4xl border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl">Add Utterance</CardTitle>
+            <CardTitle className="text-xl text-[hsl(var(--claude-text))]">Add Utterance</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {createError ? (
@@ -82,7 +82,7 @@ export function IntentUtterancesPage() {
               placeholder="e.g. I need help resetting my password"
               value={newText}
               maxLength={500}
-              className="min-h-28"
+               className="min-h-28 border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
               onChange={(event) => {
                 setNewText(event.target.value)
                 if (createError) setCreateError(null)
@@ -93,6 +93,7 @@ export function IntentUtterancesPage() {
                 aria-label="Language code"
                 value={newLanguageCode}
                 maxLength={12}
+                className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
                 onChange={(event) => {
                   setNewLanguageCode(event.target.value)
                   if (createError) setCreateError(null)
@@ -103,6 +104,7 @@ export function IntentUtterancesPage() {
                 aria-label="Source"
                 value={newSource}
                 maxLength={60}
+                className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
                 onChange={(event) => {
                   setNewSource(event.target.value)
                   if (createError) setCreateError(null)
@@ -110,7 +112,7 @@ export function IntentUtterancesPage() {
                 placeholder="manual"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[hsl(var(--claude-muted))]">
               Text: up to 500 characters. Language code: up to 12 characters (example: tr, en-US). Source: up to 60 characters.
             </p>
             <Button
@@ -157,8 +159,8 @@ export function IntentUtterancesPage() {
 
         <section className="grid grid-cols-1 gap-5">
           {items.length === 0 && !utterancesQuery.isError ? (
-            <Card className="border-border/70 shadow-sm">
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <Card className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] shadow-sm">
+              <CardContent className="py-10 text-center text-sm text-[hsl(var(--claude-muted))]">
                 No utterances yet. Add the first utterance above.
               </CardContent>
             </Card>
@@ -208,10 +210,14 @@ function UtteranceCard({
   const [cardError, setCardError] = useState<string | null>(null)
 
   return (
-    <Card className="border-border/70 shadow-sm">
+    <Card className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface))] shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
         <CardTitle className="text-sm">
-          <Badge variant="outline" className="max-w-full truncate" title={utteranceId}>
+          <Badge
+            variant="outline"
+            className="max-w-full truncate border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))]"
+            title={utteranceId}
+          >
             {utteranceId}
           </Badge>
         </CardTitle>
@@ -223,29 +229,34 @@ function UtteranceCard({
           </Alert>
         ) : null}
         <Textarea
+          aria-label={`Utterance text for ${utteranceId}`}
           value={text}
           maxLength={500}
-          className="min-h-24"
+          className="min-h-24 border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
           onChange={(event) => {
             setText(event.target.value)
             if (cardError) setCardError(null)
           }}
         />
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Input
-            value={languageCode}
-            maxLength={12}
-            onChange={(event) => {
-              setLanguageCode(event.target.value)
-              if (cardError) setCardError(null)
+            <Input
+              aria-label={`Language code for ${utteranceId}`}
+              value={languageCode}
+              maxLength={12}
+              className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
+              onChange={(event) => {
+                setLanguageCode(event.target.value)
+                if (cardError) setCardError(null)
             }}
           />
-          <Input
-            value={source}
-            maxLength={60}
-            onChange={(event) => {
-              setSource(event.target.value)
-              if (cardError) setCardError(null)
+            <Input
+              aria-label={`Source for ${utteranceId}`}
+              value={source}
+              maxLength={60}
+              className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
+              onChange={(event) => {
+                setSource(event.target.value)
+                if (cardError) setCardError(null)
             }}
           />
         </div>

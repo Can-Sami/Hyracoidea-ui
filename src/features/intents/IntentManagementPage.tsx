@@ -122,12 +122,12 @@ export function IntentManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--claude-bg))] text-[hsl(var(--claude-text))]">
       <AppSidebar activePage="intents" />
 
       <AppHeader />
 
-      <main className="ml-64 flex flex-col gap-8 bg-[hsl(var(--claude-bg))] px-6 pb-12 pt-24 lg:px-8">
+      <main className="ml-64 flex min-h-screen flex-col gap-8 bg-[hsl(var(--claude-bg))] px-6 pb-12 pt-24 lg:px-8">
         <section className="flex flex-wrap items-end justify-between gap-5">
           <div className="max-w-2xl">
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--claude-muted))]">
@@ -194,6 +194,7 @@ export function IntentManagementPage() {
                     placeholder="e.g. balance_inquiry"
                     value={intentCode}
                     maxLength={80}
+                    className="border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
                     onChange={(event) => {
                       setIntentCode(event.target.value)
                       if (formError) setFormError(null)
@@ -210,7 +211,7 @@ export function IntentManagementPage() {
                     placeholder="Describe when this intent should be selected"
                     value={description}
                     maxLength={300}
-                    className="min-h-28"
+                    className="min-h-28 border-[hsl(var(--claude-border))] bg-[hsl(var(--claude-surface-elevated))] text-[hsl(var(--claude-text))] placeholder:text-[hsl(var(--claude-muted))]"
                     onChange={(event) => {
                       setDescription(event.target.value)
                       if (formError) setFormError(null)
@@ -328,7 +329,7 @@ export function IntentManagementPage() {
             <div className="relative bg-[hsl(var(--claude-surface))]">
               <Table
                 className="bg-[hsl(var(--claude-surface))]"
-                containerClassName="border-[hsl(var(--claude-accent-soft))] bg-[hsl(var(--claude-accent-soft))]"
+                containerClassName="rounded-t-none border-[hsl(var(--claude-accent-soft))] bg-[hsl(var(--claude-accent-soft))]"
               >
                 <TableHeader>
                   <TableRow className="cursor-default bg-[hsl(var(--claude-accent-soft))] hover:!bg-[hsl(var(--claude-accent-soft))] transition-none">
